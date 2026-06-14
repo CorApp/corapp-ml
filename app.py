@@ -771,53 +771,61 @@ RESPONSES = {
     "saludo": [
         "¡Hola! 😊 Soy Vecinito de CorApp. ¿En qué te puedo ayudar hoy?",
         "¡Hola vecino! 👋 Tenemos frutas y verduras frescas con domicilio gratis. ¿Qué necesitas?",
-        "¡Bienvenido a CorApp! 😊 ¿Te ayudo con tu mercado hoy? Catálogo: https://wa.me/c/573124929496",
-        "¡Quiubo! 😊 Soy Vecinito de CorApp, listo para ayudarte con tu mercado fresco.",
+        "¡Bienvenido a CorApp! 😊 Compra tu mercado fresco directo de la central de abastos. ¿Te ayudo con algo?",
+        "¡Quiubo! 😊 Soy Vecinito de CorApp, listo para ayudarte con tu mercado fresco. ¿Qué necesitas hoy?",
+        "¡Hola! 👋 Aquí Vecinito de CorApp. Frutas y verduras frescas a tu puerta, ¡gratis el domicilio! ¿Te ayudo?",
     ],
     "consulta_catalogo": [
         "¡Claro! Aquí el catálogo: https://wa.me/c/573124929496 😊 Agrega lo que necesites y sigue los pasos.",
-        "Entra aquí, escoge, agrega al carrito y listo: https://wa.me/c/573124929496 🛒",
-        "El proceso es fácil 😊\n1️⃣ Entra al catálogo: https://wa.me/c/573124929496\n2️⃣ Agrega productos\n3️⃣ Ver carrito → Realizar pedido",
+        "El proceso es fácil 😊\n1️⃣ Entra al catálogo: https://wa.me/c/573124929496\n2️⃣ Agrega productos al carrito\n3️⃣ Toca \'Ver carrito\' → \'Realizar pedido\'\n¡Y listo! 🛒",
+        "Entra aquí, escoge lo que necesites y sigue los pasos: https://wa.me/c/573124929496 🛒 ¡Yo te ayudo si tienes dudas!",
+        "¡Con gusto te ayudo! 😊 Primero entra al catálogo: https://wa.me/c/573124929496 — agrega lo que quieras al carrito y cuando termines tocas \'Ver carrito\' y luego \'Realizar pedido\'.",
     ],
     "consulta_domicilio": [
         "¡El domicilio es completamente gratis! 🚚 ¿En qué localidad estás?",
-        "Sí, domicilio gratis a casi toda Bogotá 😊 Kennedy, Suba, Bosa, Chapinero, Engativá, Fontibón y más.",
-        "¡Gratis y a tu puerta! 🏠 Entre 7 AM y 12 PM del día que elijas.",
+        "Sí, domicilio gratis a casi toda Bogotá 😊 Cubrimos Kennedy, Suba, Bosa, Chapinero, Engativá, Fontibón, Teusaquillo, Usaquén, Barrios Unidos, Puente Aranda, Tunjuelito, Soacha y más.",
+        "¡Gratis y a tu puerta! 🏠 Entregamos entre 7 AM y 12 PM del día que elijas. ¿En qué zona estás?",
+        "¡Sí! El envío es cero pesos 😊🚚 Llegamos a casi toda Bogotá. Cuéntame en qué barrio estás.",
     ],
     "hora_pedido": [
-        "Entregamos de 7:00 AM a 12:00 PM ☀️ Si pides hoy antes de las 7 PM, llega mañana.",
-        "Las entregas son en la mañana 🚚 entre 7 AM y 12 PM del día que elijas.",
-        "Si pides hoy, mañana tienes tu mercado fresco en la puerta 😊 El horario es 7 AM - 12 PM.",
+        "Entregamos de 7:00 AM a 12:00 PM ☀️ Si pides hoy antes de las 7 PM, el mercado llega mañana en la mañana.",
+        "Las entregas son en la mañana 🚚 entre 7 AM y 12 PM del día que elijas. ¿Quieres hacer el pedido ahora?",
+        "Si pides hoy, mañana tienes tu mercado fresco en la puerta 😊 El horario de entrega es 7 AM - 12 PM.",
+        "¡Rápido! 😊 Si haces el pedido hoy antes de las 7 PM, mañana lo tienes. Las entregas son de 7 AM a 12 PM.",
     ],
     "metodo_pago": [
-        "Aceptamos efectivo, Nequi y Bre-b 💳 Todo se paga al recibir — sin anticipos.",
-        "Puedes pagar en efectivo, Nequi o Bre-b cuando llegue el pedido 😊 ¡Sin anticipos!",
-        "El pago es contra entrega 🙌 Efectivo, Nequi o Bre-b. No se paga antes.",
+        "Aceptamos efectivo, Nequi y Bre-b 💳 Todo se paga cuando llega el pedido a tu puerta — sin anticipos.",
+        "Puedes pagar en efectivo, Nequi o Bre-b cuando llegue tu pedido 😊 ¡Sin anticipos, sin complicaciones!",
+        "El pago es contra entrega 🙌 Efectivo, Nequi o Bre-b. Solo pagas cuando recibas tu mercado.",
+        "¡Sin anticipos! 😊 Pagas cuando llegue: efectivo, Nequi o Bre-b. Así de fácil.",
     ],
     "consulta_producto": [
-        "¡Tenemos muchos productos frescos! 🥦🍎 Dime cuál buscas y te comparto el enlace.",
-        "Puedes ver todo aquí: https://wa.me/c/573124929496 😊 ¿Qué producto buscas?",
-        "¡Claro! ¿Qué producto necesitas? Te comparto el enlace directo 😊",
+        "¡Tenemos muchos productos frescos! 🥦🍎 Dime cuál buscas y te comparto el enlace directo al catálogo.",
+        "Puedes ver todo aquí: https://wa.me/c/573124929496 😊 ¿Qué producto necesitas hoy?",
+        "¡Claro! ¿Qué producto buscas? Te comparto el enlace directo para que lo agregues fácil 😊",
+        "Tenemos frutas, verduras y mucho más fresquito 🥦🍊 Dime qué necesitas o entra al catálogo: https://wa.me/c/573124929496",
     ],
     "pedido_no_ha_llegado": [
-        "Lamento mucho la espera 😔 Ya notifico al equipo ahora mismo para que revisen tu entrega.",
-        "¡Qué pena! Voy a informar al supervisor de inmediato 🚨 Pronto te contactarán.",
-        "Entiendo tu preocupación 🙏 Ya escalo tu caso al equipo de logística urgente.",
+        "Lamento mucho la espera 😔 Ya notifico al equipo ahora mismo para que revisen el estado de tu entrega.",
+        "¡Qué pena! Voy a informar al supervisor de inmediato 🚨 Pronto te contactarán para darte una respuesta.",
+        "Entiendo tu preocupación 🙏 Ya escalo tu caso al equipo de logística urgente. Gracias por tu paciencia.",
+        "Lo siento mucho 😔 Ya informé al equipo. Te contactarán muy pronto para resolver esto.",
     ],
     "queja_servicio": [
-        "Lamento mucho lo ocurrido 😔 Ya informo al supervisor para darte una solución cuanto antes.",
-        "Entiendo tu molestia y me disculpo 🙏 Tu caso ya está en manos del equipo para resolverlo.",
-        "Tienes toda la razón y lo siento mucho 😔 Ya notifiqué al equipo — te contactarán pronto.",
+        "Lamento mucho lo ocurrido 😔 Tu opinión es muy importante para nosotros. Ya informo al supervisor para darte una solución.",
+        "Entiendo tu molestia y me disculpo de verdad 🙏 Tu caso ya está en manos del equipo para resolverlo cuanto antes.",
+        "Tienes toda la razón y lo siento mucho 😔 Ya notifiqué al equipo — te contactarán pronto para darte una solución.",
+        "Me disculpo por la experiencia 🙏 Eso no debería pasar. Ya informé al equipo para que te contacten urgente.",
     ],
     "consulta_estado_pedido": [
         "Déjame verificar 🔍 ¿Me confirmas el día que programaste la entrega?",
-        "Voy a informar al equipo para que te confirmen el estado de tu pedido 📦",
-        "Ya informo al equipo para que revisen tu pedido 😊 ¿Tienes algún dato adicional?",
+        "Voy a informar al equipo para que te confirmen el estado de tu pedido 📦 ¿Tienes el número de orden?",
+        "Ya informo al equipo para que revisen tu pedido 😊 En un momento tendrás respuesta.",
     ],
     "fuera_de_tema": [
-        "Por ahora solo manejo ventas de frutas y verduras 🥦 Catálogo: https://wa.me/c/573124929496",
-        "Eso está fuera de lo que puedo ayudarte, pero ya informo al equipo 😊",
-        "No tengo esa información, pero ya le aviso a un supervisor 😊 ¿Te ayudo con algún producto?",
+        "Por ahora solo manejo ventas de frutas y verduras 🥦 Pero ya informo al equipo tu mensaje. ¿Te ayudo con algo del catálogo? https://wa.me/c/573124929496",
+        "Eso está fuera de lo que puedo ayudarte, pero ya informo al equipo 😊 Para compras: https://wa.me/c/573124929496",
+        "No tengo esa información, pero ya le aviso a un supervisor 😊 Mientras tanto, ¿te puedo ayudar con algún producto?",
     ],
     "confirmar_pedido": [
         "Para confirmar escribe exactamente la palabra *Confirmar* 😊",
@@ -831,174 +839,351 @@ RESPONSES = {
         "¡Perfecto! Déjame procesar esos datos 😊",
         "Recibido, procesando tu información de entrega 📦",
     ],
+    "consulta_precio_minimo": [
+        "El pedido mínimo es de $100.000 COP 😊 Con eso ya te hacemos el domicilio completamente gratis. ¿Empezamos a armar tu pedido? https://wa.me/c/573124929496",
+        "¡Desde $100.000 COP hacemos domicilio gratis! 🛒 Entra al catálogo y arma tu pedido: https://wa.me/c/573124929496",
+        "El mínimo son $100.000 😊 ¡Y el domicilio es gratis! ¿Quieres ver qué tenemos disponible? https://wa.me/c/573124929496",
+    ],
+    "cambiar_pedido": [
+        "Para cambiar o agregar productos a tu pedido ya confirmado, necesito que me indiques qué quieres cambiar y notifico al equipo 😊",
+        "¡Claro! Dime qué quieres cambiar o agregar y lo notifico al equipo de inmediato 😊",
+        "Para modificaciones en pedidos confirmados, ya notifico al equipo con tu solicitud. ¿Qué necesitas cambiar? 😊",
+    ],
+    "pedir_hablar_humano": [
+        "¡Claro! Ya notifico a un asesor para que te atienda personalmente 😊 En un momento te contactarán.",
+        "Entendido 😊 Ya informo al supervisor para que te atienda directamente. Pronto te escriben.",
+        "¡Con gusto! Ya llamo a un asesor humano para que te ayude 😊 Dame un momento.",
+    ],
+    "consulta_descuentos": [
+        "Por ahora nuestros precios ya son los mejores porque compramos directo en la central de abastos 😊 Sin intermediarios. ¿Quieres ver el catálogo? https://wa.me/c/573124929496",
+        "Nuestro mayor descuento es que no tienes intermediarios 😊 Precios de central de abastos directo a tu casa. Catálogo: https://wa.me/c/573124929496",
+        "Los precios que ves en el catálogo ya son los mejores del mercado 😊 ¡Directo de la central de abastos! https://wa.me/c/573124929496",
+    ],
+    "agradecimiento": [
+        "¡Con mucho gusto! 😊 Fue un placer ayudarte. Cuando quieras hacer otro pedido, aquí estoy: https://wa.me/c/573124929496",
+        "¡A ti! 😊 Si necesitas algo más no dudes en escribir. ¡Buen provecho con tu mercado! 🥦🍎",
+        "¡De nada! 😊 Espero que disfrutes mucho tu mercado fresquito. Cuando quieras volver, aquí estaré.",
+        "¡Con gusto vecino! 😊 Recuerda que puedes pedir cuando quieras. El catálogo siempre está disponible: https://wa.me/c/573124929496",
+    ],
+    "despedida": [
+        "¡Hasta luego! 😊 Fue un placer atenderte. Cuando quieras tu mercado fresquito, aquí estaré.",
+        "¡Chao! 😊 Espero verte pronto. Recuerda que el catálogo siempre está disponible: https://wa.me/c/573124929496",
+        "¡Hasta pronto! 😊 Que tengas un excelente día. Cuando necesites mercado, aquí estamos.",
+    ],
+    "pensar_luego": [
+        "¡Claro, tómate tu tiempo! 😊 Cuando estés listo el catálogo te espera: https://wa.me/c/573124929496 Aquí estaré para ayudarte.",
+        "¡Sin problema! 😊 Cuando quieras hacer el pedido, solo entra aquí: https://wa.me/c/573124929496 Te espero.",
+        "¡Perfecto! 😊 No hay afán. Cuando decidas, entra al catálogo: https://wa.me/c/573124929496 ¡Aquí estaré!",
+    ],
+    "festivos_horario_especial": [
+        "Los domingos y festivos no hacemos entregas 😊 Nuestros días disponibles son: Lunes, Martes, Miércoles, Jueves, Viernes y Sábado.",
+        "Trabajamos de Lunes a Sábado 😊 Los domingos y festivos no hay entregas. ¿Quieres programar para un día disponible?",
+        "No hay entregas los domingos ni festivos 😊 Puedes elegir entre Lunes a Sábado. ¿Te ayudo a hacer el pedido? https://wa.me/c/573124929496",
+    ],
+    "dejar_vecino_porteria": [
+        "¡Claro! Puedes dejar las instrucciones en el campo de indicaciones al enviar tus datos 😊 Por ejemplo: \'Dejar con el portero\' o \'Dejar con vecino del 201\'.",
+        "Sí, el domiciliario sigue las instrucciones que dejes 😊 Solo indícalo cuando envíes tu dirección: \'Dejar en portería\' o \'Dejar con vecino\' y listo.",
+        "¡Por supuesto! 😊 Cuando envíes tus datos de entrega, agrega en indicaciones: \'Si no hay nadie, dejar con portero\' y el domiciliario lo tendrá en cuenta.",
+    ],
+}
+BUSINESS_TYPE_DESCRIPTIONS = {
+    "frutas_verduras": {
+        "products_label": "frutas y verduras frescas",
+        "emoji": "🥦🍎",
+        "delivery_label": "domicilio",
+        "catalog_verb": "ver los productos frescos de hoy",
+    },
+    "muebles": {
+        "products_label": "muebles y productos para el hogar",
+        "emoji": "🛋️🪑",
+        "delivery_label": "entrega a domicilio",
+        "catalog_verb": "ver nuestros muebles",
+    },
+    "ropa": {
+        "products_label": "ropa y accesorios",
+        "emoji": "👕👗",
+        "delivery_label": "envío a domicilio",
+        "catalog_verb": "ver nuestras prendas",
+    },
+    "restaurante": {
+        "products_label": "platos y bebidas",
+        "emoji": "🍽️🥘",
+        "delivery_label": "domicilio",
+        "catalog_verb": "ver el menú",
+    },
+    "drogueria": {
+        "products_label": "medicamentos y productos de salud",
+        "emoji": "💊🏥",
+        "delivery_label": "domicilio",
+        "catalog_verb": "ver los productos disponibles",
+    },
+    "panaderia": {
+        "products_label": "pan, pasteles y productos de panadería",
+        "emoji": "🥐🍰",
+        "delivery_label": "domicilio",
+        "catalog_verb": "ver los productos del día",
+    },
 }
 
-FALLBACK = [
-    "¡Hola! 😊 Soy Vecinito de CorApp. ¿En qué te puedo ayudar? https://wa.me/c/573124929496",
-    "Entiendo 😊 ¿Necesitas hacer un pedido o tienes alguna duda sobre nuestros productos?",
-    "¡Aquí estoy! 🛒 Frutas y verduras frescas con domicilio gratis: https://wa.me/c/573124929496",
-    "Ya informé al equipo 😊 ¿Puedo ayudarte con algo más?",
-    "¡Con mucho gusto! 😊 ¿Qué necesitas hoy de CorApp?",
-    "Disculpa, no entendí bien 😊 ¿Me repites qué necesitas?",
-]
+DEFAULT_BUSINESS = {
+    "products_label": "productos",
+    "emoji": "📦",
+    "delivery_label": "domicilio",
+    "catalog_verb": "ver nuestros productos",
+}
 
 
-def respond(intent: str, confidence: float) -> str:
-    if confidence < 0.15:
-        return random.choice(FALLBACK)
-    r = RESPONSES.get(intent)
-    return random.choice(r) if r else random.choice(FALLBACK)
+def find_products_by_query(query: str, products: list) -> list:
+    """
+    Busca productos por nombre o categoría según el mensaje del usuario.
+    """
+    if not products or not query:
+        return []
+
+    query_norm = normalize(query)
+    matches = []
+
+    for product in products:
+        name_norm = normalize(str(product.get("name", "")))
+        category_norm = normalize(str(product.get("category", "")))
+
+        # Similitud con nombre o categoría
+        name_score = max(
+            levenshtein(query_norm, name_norm),
+            jaro_winkler(query_norm, name_norm),
+        )
+        cat_score = max(
+            levenshtein(query_norm, category_norm),
+            jaro_winkler(query_norm, category_norm),
+        )
+
+        # También buscar por palabras individuales
+        for word in query_norm.split():
+            if len(word) >= 3:
+                if word in name_norm or word in category_norm:
+                    matches.append((product, max(name_score, cat_score, 0.85)))
+                    break
+        else:
+            best = max(name_score, cat_score)
+            if best >= 0.72:
+                matches.append((product, best))
+
+    # Ordenar por relevancia y retornar top 3
+    matches.sort(key=lambda x: x[1], reverse=True)
+    return [m[0] for m in matches[:3]]
 
 
-# ============================================================
-# ANÁLISIS DE FALLOS
-# ============================================================
+def build_tenant_response(
+    intent: str,
+    confidence: float,
+    message: str,
+    tenant: dict,
+    products: list,
+) -> str:
+    """
+    Genera una respuesta natural y contextualizada para el tenant.
+    """
+    bot_name = tenant.get("bot_name", "tu asistente")
+    business_name = tenant.get("business_name", "nuestro negocio")
+    business_type = tenant.get("business_type", "otro")
+    catalog_url = tenant.get("catalog_url", "")
+    delivery_type = tenant.get("delivery_type", "domicilio")
+    locations = tenant.get("locations", [])
 
-def analyze_failures(messages: list) -> list:
-    suggestions, seen = [], set()
+    biz = BUSINESS_TYPE_DESCRIPTIONS.get(business_type, DEFAULT_BUSINESS)
+    bus_emoji = biz["emoji"]
 
-    for text in messages:
-        if not text or not text.strip():
-            continue
-        norm = normalize(text)
+    location_names = [l.get("name", "") for l in locations if l.get("name")]
+    locations_text = ", ".join(location_names) if location_names else "Bogota"
 
-        # Barrios nuevos no reconocidos
-        for pattern in [r'\bbarrio\s+([a-záéíóúñ\s]{3,30})', r'\bsector\s+([a-záéíóúñ\s]{3,30})']:
-            for match in re.findall(pattern, norm):
-                mc = match.strip()
-                if mc and mc not in VALID_LOCATIONS:
-                    key = f"loc_{mc}"
-                    if key not in seen:
-                        seen.add(key)
-                        suggestions.append({
-                            "type": "new_location",
-                            "value": mc,
-                            "suggested_locality": None,
-                            "original_message": text[:120],
-                        })
+    all_days = set()
+    for loc in locations:
+        for day in loc.get("days", []):
+            all_days.add(day)
+    days_text = ", ".join(sorted(all_days)) if all_days else "Lunes a Sabado"
 
-        # Días problemáticos
-        day, day_err = extract_day(text)
-        if not day:
-            for bad in INVALID_DAYS:
-                if re.search(r'\b' + normalize(bad) + r'\b', norm):
-                    key = f"day_{bad}"
-                    if key not in seen:
-                        seen.add(key)
-                        suggestions.append({
-                            "type": "day_format", "value": bad,
-                            "suggestion": f"Usuario escribió '{bad}' en lugar del nombre del día",
-                            "original_message": text[:120],
-                        })
+    if delivery_type == "domicilio":
+        delivery_text = f"entregamos a domicilio gratis en {locations_text}"
+    elif delivery_type == "punto_fisico":
+        delivery_text = "puedes recoger en nuestro punto fisico"
+    else:
+        delivery_text = f"hacemos domicilio en {locations_text} y tambien puedes recoger en el punto"
 
-            dp = r'\b\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\b'
-            dm = re.search(dp, norm)
-            if dm:
-                key = f"date_{dm.group(0)}"
-                if key not in seen:
-                    seen.add(key)
-                    suggestions.append({
-                        "type": "day_format",
-                        "value": dm.group(0),
-                        "suggestion": "Usuario envió fecha completa en lugar del nombre del día",
-                        "original_message": text[:120],
-                    })
+    matching_products = find_products_by_query(message, products)
 
-        # Tiene dirección y localidad pero falta día
-        has_addr = bool(re.search(ADDR_START, norm))
-        loc, _ = extract_locality(text)
-        if has_addr and loc and not day:
-            key = f"missing_day_{text[:40]}"
-            if key not in seen:
-                seen.add(key)
-                suggestions.append({
-                    "type": "missing_day",
-                    "value": text[:120],
-                    "suggestion": "Usuario envió dirección y localidad pero olvidó el día",
-                    "original_message": text[:120],
-                })
+    if intent == "saludo":
+        opts = [
+            f"Hola! Soy {bot_name} de {business_name}. Tenemos {biz['products_label']} {bus_emoji} y {delivery_text}. En que te puedo ayudar hoy?",
+            f"Hola! Bienvenido a {business_name}. Soy {bot_name}, tu asistente virtual. Que estas buscando hoy? {bus_emoji}",
+            f"Quiubo! Soy {bot_name} de {business_name}. Estoy aqui para ayudarte con {biz['products_label']}. Que necesitas?",
+        ]
+        return random.choice(opts)
 
-    return suggestions
+    elif intent == "consulta_producto":
+        if matching_products:
+            response = f"Claro! {bus_emoji} Encontre estos productos que te pueden interesar:\n\n"
+            for p in matching_products:
+                price = p.get("price", 0)
+                wa_url = p.get("whatsapp_url", "")
+                name = p.get("name", "Producto")
+                price_fmt = f"${int(float(price)):,}".replace(",", ".") if price else ""
+                line = f"- {name}"
+                if price_fmt:
+                    line += f" - {price_fmt}"
+                if wa_url:
+                    line += f"\n  {wa_url}"
+                response += line + "\n\n"
+            response += "Te interesa alguno? 😊"
+            return response
+        elif catalog_url:
+            opts = [
+                f"Claro! {bus_emoji} Puedes {biz['catalog_verb']} aqui: {catalog_url} Hay algo especifico que estes buscando?",
+                f"Tenemos varios {biz['products_label']} disponibles {bus_emoji} Entra al catalogo: {catalog_url}",
+            ]
+            return random.choice(opts)
+        return f"Claro! {bus_emoji} Tenemos varios {biz['products_label']} disponibles. Que estas buscando exactamente?"
+
+    elif intent == "consulta_catalogo":
+        if catalog_url:
+            opts = [
+                f"Con gusto! Aqui tienes el catalogo de {business_name}: {catalog_url} {bus_emoji} Agrega lo que necesites.",
+                f"Puedes ver todos nuestros {biz['products_label']} aqui: {catalog_url} {bus_emoji} Te ayudo con algo especifico?",
+            ]
+            return random.choice(opts)
+        return f"Escribeme que {biz['products_label']} buscas y te ayudo de inmediato {bus_emoji}"
+
+    elif intent == "consulta_domicilio":
+        if delivery_type == "punto_fisico":
+            return f"Puedes recoger tu pedido en nuestro punto fisico. Quieres mas informacion?"
+        opts = [
+            f"Si! {delivery_text.capitalize()} Los dias de entrega son {days_text}. Quieres hacer un pedido?",
+            f"Claro! {delivery_text.capitalize()} Dias disponibles: {days_text}. En que zona estas?",
+        ]
+        return random.choice(opts)
+
+    elif intent == "hora_pedido":
+        opts = [
+            f"Las entregas son en horas de la manana entre 7 AM y 12 PM del dia que elijas. Tenemos disponibilidad los {days_text}.",
+            f"Entregamos de 7 AM a 12 PM los dias {days_text}. Para cuando quieres tu pedido?",
+        ]
+        return random.choice(opts)
+
+    elif intent == "metodo_pago":
+        opts = [
+            f"Aceptamos efectivo, Nequi y Bre-b El pago es al recibir tu pedido - sin anticipos!",
+            f"Puedes pagar en efectivo, Nequi o Bre-b cuando llegue tu pedido Sin anticipos!",
+        ]
+        return random.choice(opts)
+
+    elif intent == "pedido_no_ha_llegado":
+        opts = [
+            f"Lamento mucho la espera Ya informo al equipo de {business_name} ahora mismo para que revisen tu entrega.",
+            f"Que pena! Voy a notificar al equipo de inmediato. Pronto te contactaran para resolver esto.",
+        ]
+        return random.choice(opts)
+
+    elif intent == "queja_servicio":
+        opts = [
+            f"Lamento mucho lo ocurrido Tu comentario es muy importante para {business_name}. Ya informo al equipo para darte una solucion.",
+            f"Entiendo tu molestia y me disculpo Ya escalo tu caso al equipo para que te contacten pronto.",
+        ]
+        return random.choice(opts)
+
+    elif intent == "consulta_estado_pedido":
+        return f"Dejame verificar Me confirmas tu nombre y el dia que programaste la entrega?"
+
+    elif intent == "agradecimiento":
+        opts = [
+            f"Con mucho gusto! Fue un placer ayudarte. Cuando quieras hacer otro pedido, aqui estamos en {business_name}.",
+            f"A ti! Si necesitas algo mas, no dudes en escribir. {bus_emoji}",
+        ]
+        return random.choice(opts)
+
+    elif intent == "despedida":
+        opts = [
+            f"Hasta luego! Fue un placer atenderte en {business_name}. Cuando quieras volver, aqui estaremos.",
+            f"Chao! Espero verte pronto. Recuerda que el catalogo siempre esta disponible: {catalog_url}",
+        ]
+        return random.choice(opts)
+
+    elif intent == "consulta_precio_minimo":
+        return f"El pedido minimo es de $100.000 COP Y el domicilio es completamente gratis! Empezamos? {catalog_url}"
+
+    elif intent == "pedir_hablar_humano":
+        return f"Claro! Ya notifico a un asesor de {business_name} para que te atienda personalmente. En un momento te contactaran."
+
+    elif intent == "pensar_luego":
+        opts = [
+            f"Sin problema! Cuando estes listo el catalogo te espera: {catalog_url} Aqui estare!",
+            f"Perfecto! No hay afan. Cuando decidas, entra aqui: {catalog_url} Te espero!",
+        ]
+        return random.choice(opts)
+
+    elif intent == "festivos_horario_especial":
+        return f"Trabajamos {days_text} Los domingos y festivos no hay entregas. Quieres programar para un dia disponible?"
+
+    elif intent == "fuera_de_tema":
+        opts = [
+            f"Por ahora solo manejo lo de {business_name} Te puedo ayudar con algun {biz['products_label']}? {catalog_url}",
+            f"Eso esta fuera de lo que puedo ayudarte, pero ya informo al equipo Para compras: {catalog_url}",
+        ]
+        return random.choice(opts)
+
+    # Fallback con productos si hay
+    if matching_products and confidence > 0.1:
+        response = f"Mira estos productos que tenemos {bus_emoji}\n\n"
+        for p in matching_products:
+            wa_url = p.get("whatsapp_url", "")
+            name = p.get("name", "Producto")
+            line = f"- {name}"
+            if wa_url:
+                line += f"\n  {wa_url}"
+            response += line + "\n\n"
+        response += "Te interesa alguno? 😊"
+        return response
+
+    opts = [
+        f"Hola! Soy {bot_name} de {business_name}. En que te puedo ayudar? {catalog_url}",
+        f"Entiendo En que te puedo ayudar? {bus_emoji}",
+        f"Aqui estoy para ayudarte! Que necesitas de {business_name}?",
+    ]
+    return random.choice(opts)
 
 
-# ============================================================
-# ENDPOINTS
-# ============================================================
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    data = request.get_json()
-    if not data or 'message' not in data:
-        return jsonify({'error': 'Se requiere message'}), 400
-    intent, conf = classify(data['message'])
-    return jsonify({
-        'message': data['message'],
-        'intent': intent,
-        'confidence': round(conf, 4),
-        'use_fallback': conf < 0.2,
-    })
-
-
-@app.route('/extract-delivery', methods=['POST'])
-def endpoint_extract():
-    data = request.get_json()
-    if not data or 'text' not in data:
-        return jsonify({'error': True, 'errorMessage': 'Se requiere text', 'info': None}), 400
-    return jsonify(extract_delivery(
-        data['text'],
-        data.get('validLocations'),
-        data.get('validDays'),
-        data.get('validTimes'),
-    ))
-
-
-@app.route('/respond', methods=['POST'])
-def endpoint_respond():
+@app.route('/respond-tenant', methods=['POST'])
+def respond_tenant():
+    """
+    Genera respuesta contextualizada para un tenant específico.
+    Recibe: message, tenant (config), products (lista de productos)
+    """
     data = request.get_json() or {}
     message = data.get('message', '')
+    tenant = data.get('tenant', {})
+    products = data.get('products', [])
+
+    if not message:
+        bot_name = tenant.get('bot_name', 'tu asistente')
+        business_name = tenant.get('business_name', 'nuestro negocio')
+        catalog_url = tenant.get('catalog_url', '')
+        return jsonify({
+            'response': f'¡Hola! 😊 Soy {bot_name} de {business_name}. ¿En qué te puedo ayudar? {catalog_url}',
+            'intent': 'saludo',
+            'confidence': 1.0,
+        })
+
+    # Clasificar intención
     try:
-        intent, conf = classify(message)
+        intent, confidence = classify(message)
     except Exception:
-        intent, conf = 'unknown', 0.0
+        intent, confidence = 'unknown', 0.0
+
+    response = build_tenant_response(intent, confidence, message, tenant, products)
+
     return jsonify({
-        'response': respond(intent, conf),
+        'response': response,
         'intent': intent,
-        'confidence': round(conf, 4),
-        'use_fallback': conf < 0.2,
+        'confidence': round(confidence, 4),
     })
-
-
-@app.route('/analyze-failures', methods=['POST'])
-def endpoint_analyze():
-    data = request.get_json()
-    if not data or 'messages' not in data:
-        return jsonify({'error': True, 'errorMessage': 'Se requiere messages', 'suggestions': []}), 400
-    suggestions = analyze_failures(data['messages'])
-    return jsonify({
-        'error': False, 'errorMessage': None,
-        'analyzed': len(data['messages']),
-        'suggestions': suggestions,
-    })
-
-
-@app.route('/retrain', methods=['POST'])
-def endpoint_retrain():
-    """Reentrena el modelo con nuevos datos."""
-    try:
-        if os.path.exists('model/intent_classifier.pkl'):
-            os.remove('model/intent_classifier.pkl')
-        global model
-        model = None
-        train_model()
-        return jsonify({'success': True, 'message': 'Modelo reentrenado correctamente'})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@app.route('/health', methods=['GET'])
-def health():
-    return jsonify({'status': 'ok', 'version': '5.0.0'})
-
 
 # v5.0.0 — modelo completo con fuzzy search, aliases colombianos,
 # respuestas empáticas y análisis de fallos
