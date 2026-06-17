@@ -573,6 +573,24 @@ def extract_locality(text: str):
 
 ADDR_START = r'(?:calle|cll|cl|carrera|cra|cr|kra|avenida|av|transversal|transv|tranv|tv|diagonal|dg|autopista|ak)'
 
+# Versión estricta con word boundaries para extracción de nombres
+ADDR_START_STRICT = r'\b(?:calle|cll|carrera|avenida|av|transversal|tv|diagonal|dg|autopista|ak)\b'
+
+# Nombres propios colombianos comunes — para detectar nombre de 1 palabra antes de la dirección
+COMMON_NAMES = {
+    'pedro', 'carlos', 'maria', 'juan', 'jose', 'luis', 'ana', 'sofia',
+    'miguel', 'jorge', 'andres', 'alejandro', 'david', 'daniel', 'paula',
+    'laura', 'diana', 'monica', 'patricia', 'andrea', 'camila', 'valentina',
+    'julian', 'sebastian', 'nicolas', 'felipe', 'sergio', 'oscar', 'hugo',
+    'ivan', 'omar', 'edgar', 'henry', 'mario', 'hector', 'rafael', 'cesar',
+    'gustavo', 'rodrigo', 'nelson', 'wilson', 'jhon', 'john', 'jhonatan',
+    'cristian', 'christian', 'fabian', 'hernan', 'fredy', 'freddy', 'giovanny',
+    'giovanni', 'leidy', 'lady', 'angie', 'yuli', 'juli', 'paola', 'carol',
+    'jenny', 'yenny', 'tatiana', 'viviana', 'lorena', 'natalia', 'catalina',
+    'alejandra', 'marcela', 'claudia', 'sandra', 'esperanza', 'luz', 'gloria',
+    'olga', 'martha', 'marta', 'blanca', 'rosa', 'carmen', 'amparo',
+}
+
 INDIC_KW = [
     'apto','apartamento','apt','torre','bloque','interior','int',
     'piso','local','oficina','conjunto','edificio','etapa','unidad',
@@ -589,6 +607,13 @@ INDIC_KW = [
 
 
 def extract_address_indications(text: str) -> tuple:
+    # Si todo está en una línea, empezar desde la primera palabra de dirección
+    lines_orig = text.split('\n')
+    if len([l for l in lines_orig if l.strip()]) == 1:
+        m = re.search(ADDR_START_STRICT, text, re.IGNORECASE)
+        if m:
+            text = text[m.start():]
+
     lines = [l.strip() for l in text.replace(',', '\n').split('\n') if l.strip()]
     address = None
     indics = []
@@ -642,22 +667,33 @@ def extract_address_indications(text: str) -> tuple:
 def extract_name(text: str):
     """
     Extrae nombre del usuario.
-    Solo acepta líneas con letras y espacios, 2-5 palabras,
-    sin números, emails, días ni localidades.
+    Maneja el caso donde nombre y dirección están en la misma línea.
+    Estrategia: buscar texto antes de la primera palabra de dirección.
     """
     lines = [l.strip() for l in text.split('\n') if l.strip()]
-    day_kw = '|'.join(normalize(d) for d in list(VALID_DAYS.keys()) + list(DAY_ALIASES.keys()))
-    loc_kw = '|'.join(normalize(l) for l in VALID_LOCATIONS.keys() if l)
 
-    for line in lines[:4]:
-        n = normalize(line)
-        c = clean_noise(line).strip()
-        if (re.match(r'^[a-záéíóúñ\s]+$', n)
-                and 2 <= len(c.split()) <= 5
-                and not re.search(r'\b(' + day_kw + r')\b', n)
-                and not re.search(r'\b(' + loc_kw + r')\b', n)
-                and not re.search(r'@|\d|calle|carrera|avenida|diagonal|transversal', n)):
-            return c
+    # Múltiples líneas — primera línea que sea solo letras es el nombre
+    if len(lines) > 1:
+        for line in lines[:2]:
+            n = normalize(line)
+            if (re.match(r'^[a-záéíóúñ\s]+$', n)
+                    and 1 <= len(line.split()) <= 5
+                    and not re.search(ADDR_START_STRICT, n)):
+                return line.strip().title()
+
+    # Una sola línea o no se encontró — extraer antes de la dirección
+    norm_text = normalize(text)
+    m = re.search(ADDR_START_STRICT, norm_text)
+    if m:
+        before = norm_text[:m.start()].strip()
+        if before:
+            words = before.split()
+            if re.match(r'^[a-záéíóúñ\s]+$', before):
+                if 2 <= len(words) <= 4:
+                    return ' '.join(w.capitalize() for w in words)
+                elif len(words) == 1 and words[0] in COMMON_NAMES:
+                    return words[0].capitalize()
+
     return None
 
 
@@ -1183,6 +1219,39 @@ def respond_tenant():
         'response': response,
         'intent': intent,
         'confidence': round(confidence, 4),
+    })
+
+
+@app.route('/extract-delivery', methods=['POST'])
+def extract_delivery_endpoint():
+    """
+    Extrae datos de entrega de un mensaje de texto.
+    Usado por el bot de tenants para procesar datos de envio.
+    """
+    data = request.get_json() or {}
+    message = data.get('message', '')
+
+    if not message:
+        return jsonify({"success": False, "error": "Mensaje vacio"})
+
+    result = extract_delivery(message)
+
+    if result.get('error'):
+        return jsonify({
+            "success": False,
+            "error": result.get('errorMessage', 'Error extrayendo datos'),
+        })
+
+    info = result.get('info', {})
+    return jsonify({
+        "success": True,
+        "name": info.get('userName'),
+        "address": info.get('address'),
+        "indications": info.get('indications', ''),
+        "location": info.get('locationDelivery'),
+        "day": info.get('dayDelivery'),
+        "latitude": info.get('latitude', 4.7110),
+        "longitude": info.get('longitude', -74.0721),
     })
 
 # v5.0.0 — modelo completo con fuzzy search, aliases colombianos,
