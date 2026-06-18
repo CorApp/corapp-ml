@@ -1079,7 +1079,12 @@ def build_tenant_response(
     else:
         delivery_text = f"hacemos domicilio en {locations_text} y tambien puedes recoger en el punto"
 
-    matching_products = find_products_by_query(message, products)
+    # Detectar si el mensaje tiene URL de producto específico
+    product_from_url = extract_product_from_url(message, products)
+    if product_from_url:
+        matching_products = [product_from_url]
+    else:
+        matching_products = find_products_by_query(message, products)
 
     if intent == "saludo":
         opts = [
@@ -1091,6 +1096,24 @@ def build_tenant_response(
 
     elif intent == "consulta_producto":
         if matching_products:
+            # Si viene de URL — respuesta detallada de un solo producto
+            if product_from_url and len(matching_products) == 1:
+                p = matching_products[0]
+                price = p.get("price", 0)
+                name = p.get("name", "Producto")
+                description = p.get("description", "")
+                wa_url = p.get("whatsapp_url", "")
+                price_fmt = f"${int(float(price)):,}".replace(",", ".") if price else ""
+                response = f"{bus_emoji} *{name}*"
+                if price_fmt:
+                    response += f"\nPrecio: {price_fmt}"
+                if description:
+                    response += f"\n\n{description}"
+                if wa_url:
+                    response += f"\n\nVer en catalogo: {wa_url}"
+                response += "\n\n¿Te gustaria pedirlo? 😊"
+                return response
+            # Respuesta normal — lista de productos
             response = f"Claro! {bus_emoji} Encontre estos productos que te pueden interesar:\n\n"
             for p in matching_products:
                 price = p.get("price", 0)
@@ -1223,6 +1246,152 @@ def build_tenant_response(
     return random.choice(opts)
 
 
+
+# ============================================================
+# DICCIONARIO DE CONTEXTO POR TIPO DE NEGOCIO
+# ============================================================
+
+BUSINESS_CONTEXT: dict[str, list[str]] = {
+    "muebles": [
+        "cama", "camas", "sofa", "sofas", "silla", "sillas", "mesa", "mesas",
+        "closet", "closets", "armario", "armarios", "comoda", "comodas",
+        "escritorio", "escritorios", "estante", "estantes", "biblioteca",
+        "biblioteca", "buro", "buros", "camarote", "camarotes", "litera",
+        "literas", "colchon", "colchones", "sala", "alcoba", "habitacion",
+        "comedor", "mueble", "muebles", "madera", "tapizado", "espejo",
+        "espejos", "tocador", "tocadores", "alacena", "alacenas", "vitrina",
+        "vitrinas", "rinconera", "rinconeras", "baul", "baules", "puff",
+        "taburete", "taburetes", "mecedora", "mecedoras", "poltrona",
+        "poltronas", "sillon", "sillones", "zapatera", "zapateras",
+    ],
+    "frutas_verduras": [
+        "manzana", "manzanas", "pera", "peras", "naranja", "naranjas",
+        "limon", "limones", "banano", "bananos", "platano", "platanos",
+        "mango", "mangos", "papaya", "papayas", "fresa", "fresas",
+        "mora", "moras", "uva", "uvas", "sandia", "melon", "melones",
+        "kiwi", "piña", "pinas", "guayaba", "guayabas", "mandarina",
+        "mandarinas", "tomate", "tomates", "papa", "papas", "cebolla",
+        "cebollas", "zanahoria", "zanahorias", "lechuga", "lechugas",
+        "espinaca", "espinacas", "brocoli", "coliflor", "pepino",
+        "pepinos", "aguacate", "aguacates", "cilantro", "apio",
+        "verdura", "verduras", "fruta", "frutas", "mercado", "kilo",
+    ],
+    "ropa": [
+        "camisa", "camisas", "pantalon", "pantalones", "vestido", "vestidos",
+        "falda", "faldas", "blusa", "blusas", "chaqueta", "chaquetas",
+        "abrigo", "abrigos", "zapato", "zapatos", "tenis", "bota", "botas",
+        "sandalias", "ropa", "prenda", "prendas", "tela", "tallas",
+        "camiseta", "camisetas", "jean", "jeans", "sudadera", "sudaderas",
+        "pijama", "pijamas", "ropa interior", "calcetines", "medias",
+        "gorra", "gorras", "bolso", "bolsos", "cartera", "carteras",
+        "cinturon", "cinturones", "corbata", "corbatas", "bufanda",
+    ],
+    "restaurante": [
+        "menu", "plato", "platos", "almuerzo", "almuerzos", "desayuno",
+        "desayunos", "cena", "cenas", "sopa", "sopas", "bandeja", "corriente",
+        "jugo", "jugos", "bebida", "bebidas", "postre", "postres",
+        "arroz", "pollo", "carne", "carnes", "pescado", "ensalada",
+        "ensaladas", "hamburguesa", "hamburguesas", "pizza", "pizzas",
+        "pasta", "pastas", "sandwich", "sandwiches", "comida", "pedido",
+    ],
+    "drogueria": [
+        "medicamento", "medicamentos", "pastilla", "pastillas", "capsula",
+        "capsulas", "jarabe", "jarabes", "crema", "cremas", "shampoo",
+        "acondicionador", "vitamina", "vitaminas", "suplemento", "suplementos",
+        "gel", "antibiotico", "antibioticos", "analgesico", "analgesicos",
+        "antigripal", "antigripales", "desinfectante", "alcohol", "tapabocas",
+        "jeringa", "jeringas", "vendaje", "vendajes", "pañal", "pañales",
+        "protector", "solar", "perfume", "perfumes", "locion", "lociones",
+    ],
+    "panaderia": [
+        "pan", "panes", "croissant", "croissants", "galleta", "galletas",
+        "torta", "tortas", "pastel", "pasteles", "ponque", "ponques",
+        "buñuelo", "buñuelos", "empanada", "empanadas", "arepa", "arepas",
+        "almojabana", "almojabanas", "mogolla", "mogollas", "pandebono",
+        "pandebonos", "roscón", "roscones", "muffin", "muffins",
+        "brownie", "brownies", "cheesecake", "donut", "donuts",
+        "cafe", "chocolate", "bebida", "bebidas",
+    ],
+}
+
+
+def get_business_context_words(business_type: str) -> list[str]:
+    """Retorna las palabras de contexto para un tipo de negocio."""
+    return BUSINESS_CONTEXT.get(business_type, [])
+
+
+def extract_product_from_url(message: str, products: list) -> dict | None:
+    """
+    Detecta si el mensaje contiene una URL de producto de WhatsApp
+    y retorna el producto correspondiente.
+    URLs como: https://wa.me/p/PRODUCT_ID/NUMBER
+    """
+    import re
+    # Buscar patrón de URL de producto de WhatsApp
+    match = re.search(r'wa\.me/p/([^/\s]+)', message)
+    if not match:
+        return None
+    product_id = match.group(1)
+    for product in products:
+        wa_url = product.get("whatsapp_url", "")
+        if product_id in wa_url:
+            return product
+    return None
+
+
+def is_product_query(message: str, products: list, business_type: str = "") -> bool:
+    """
+    Detecta si el mensaje es una consulta de producto o categoría.
+    1. Detecta URLs de productos de WhatsApp
+    2. Verifica contra el diccionario de contexto del tipo de negocio
+    3. Verifica contra los productos reales del tenant
+    """
+    # URL de producto → siempre es consulta de producto
+    if extract_product_from_url(message, products):
+        return True
+
+    msg_norm = normalize(message)
+    msg_words = [w for w in msg_norm.split() if len(w) >= 4]
+
+    if not msg_words:
+        return False
+
+    # Verificar contra diccionario de contexto del tipo de negocio
+    # Esto va ANTES de verificar productos — da contexto general del negocio
+    if business_type:
+        context_words = set(get_business_context_words(business_type))
+        for word in msg_words:
+            # Coincidencia exacta con el diccionario
+            if word in context_words:
+                return True
+            # Coincidencia parcial estricta — ambas palabras >= 6 letras
+            for cw in context_words:
+                if len(cw) >= 7 and len(word) >= 7 and (word in cw or cw in word):
+                    return True
+
+    for product in products:
+        # Verificar contra categoría
+        cat_norm = normalize(str(product.get("category", "")))
+        if cat_norm:
+            for word in msg_words:
+                if word in cat_norm or cat_norm in word:
+                    return True
+            if max((jaro_winkler(w, cat_norm) for w in msg_words), default=0) >= 0.85:
+                return True
+
+        # Verificar contra nombre — cada palabra del nombre
+        name_norm = normalize(str(product.get("name", "")))
+        name_words = [w for w in name_norm.split() if len(w) >= 4]
+        for word in msg_words:
+            for nw in name_words:
+                if word == nw or (len(word) >= 5 and word in name_norm):
+                    return True
+        if max((jaro_winkler(w, name_norm) for w in msg_words), default=0) >= 0.85:
+            return True
+
+    return False
+
+
 @app.route('/respond-tenant', methods=['POST'])
 def respond_tenant():
     """
@@ -1239,16 +1408,20 @@ def respond_tenant():
         business_name = tenant.get('business_name', 'nuestro negocio')
         catalog_url = tenant.get('catalog_url', '')
         return jsonify({
-            'response': f'¡Hola! 😊 Soy {bot_name} de {business_name}. ¿En qué te puedo ayudar? {catalog_url}',
+            'response': f'Hola! Soy {bot_name} de {business_name}. En que te puedo ayudar? {catalog_url}',
             'intent': 'saludo',
             'confidence': 1.0,
         })
 
-    # Clasificar intención
-    try:
-        intent, confidence = classify(message)
-    except Exception:
-        intent, confidence = 'unknown', 0.0
+    # Si hay match en diccionario de contexto o productos reales → consulta_producto directo
+    # Si no hay match → el clasificador decide, pero si clasifica como consulta_producto igual busca productos
+    if is_product_query(message, products, tenant.get("business_type", "")):
+        intent, confidence = 'consulta_producto', 0.99
+    else:
+        try:
+            intent, confidence = classify(message)
+        except Exception:
+            intent, confidence = 'unknown', 0.0
 
     response = build_tenant_response(intent, confidence, message, tenant, products)
 
@@ -1295,3 +1468,4 @@ def extract_delivery_endpoint():
 # respuestas empáticas y análisis de fallos
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+    
