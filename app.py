@@ -971,42 +971,76 @@ DEFAULT_BUSINESS = {
 
 def find_products_by_query(query: str, products: list) -> list:
     """
-    Busca productos por nombre o categoría según el mensaje del usuario.
+    Busca productos:
+    1. Primero por categoría — si encuentra productos en esa categoría los retorna todos
+    2. Si no hay coincidencias por categoría, busca por nombre de producto
     """
     if not products or not query:
         return []
 
     query_norm = normalize(query)
-    matches = []
+    query_words = [w for w in query_norm.split() if len(w) >= 3]
 
+    # ============================================================
+    # PASO 1: Buscar por categoría
+    # ============================================================
+    category_matches = []
+    for product in products:
+        category_norm = normalize(str(product.get("category", "")))
+        if not category_norm:
+            continue
+
+        # Coincidencia exacta de palabra
+        for word in query_words:
+            if word in category_norm or category_norm in word:
+                category_matches.append(product)
+                break
+        else:
+            # Similitud fuzzy con la categoría
+            cat_score = max(
+                levenshtein(query_norm, category_norm),
+                jaro_winkler(query_norm, category_norm),
+            )
+            # También probar cada palabra del query contra la categoría
+            word_score = max(
+                (max(levenshtein(w, category_norm), jaro_winkler(w, category_norm))
+                 for w in query_words),
+                default=0
+            )
+            best = max(cat_score, word_score)
+            if best >= 0.75:
+                category_matches.append(product)
+
+    if category_matches:
+        return category_matches[:5]  # Retornar hasta 5 productos de la categoría
+
+    # ============================================================
+    # PASO 2: Si no hay resultados por categoría, buscar por nombre
+    # ============================================================
+    name_matches = []
     for product in products:
         name_norm = normalize(str(product.get("name", "")))
-        category_norm = normalize(str(product.get("category", "")))
 
-        # Similitud con nombre o categoría
-        name_score = max(
-            levenshtein(query_norm, name_norm),
-            jaro_winkler(query_norm, name_norm),
-        )
-        cat_score = max(
-            levenshtein(query_norm, category_norm),
-            jaro_winkler(query_norm, category_norm),
-        )
-
-        # También buscar por palabras individuales
-        for word in query_norm.split():
-            if len(word) >= 3:
-                if word in name_norm or word in category_norm:
-                    matches.append((product, max(name_score, cat_score, 0.85)))
-                    break
+        for word in query_words:
+            if word in name_norm:
+                name_matches.append((product, 0.9))
+                break
         else:
-            best = max(name_score, cat_score)
+            name_score = max(
+                levenshtein(query_norm, name_norm),
+                jaro_winkler(query_norm, name_norm),
+            )
+            word_score = max(
+                (max(levenshtein(w, name_norm), jaro_winkler(w, name_norm))
+                 for w in query_words),
+                default=0
+            )
+            best = max(name_score, word_score)
             if best >= 0.72:
-                matches.append((product, best))
+                name_matches.append((product, best))
 
-    # Ordenar por relevancia y retornar top 3
-    matches.sort(key=lambda x: x[1], reverse=True)
-    return [m[0] for m in matches[:3]]
+    name_matches.sort(key=lambda x: x[1], reverse=True)
+    return [m[0] for m in name_matches[:3]]
 
 
 def build_tenant_response(
@@ -1051,7 +1085,7 @@ def build_tenant_response(
         opts = [
             f"Hola! Soy {bot_name} de {business_name}. Tenemos {biz['products_label']} {bus_emoji} y {delivery_text}. En que te puedo ayudar hoy?",
             f"Hola! Bienvenido a {business_name}. Soy {bot_name}, tu asistente virtual. Que estas buscando hoy? {bus_emoji}",
-            f"Quiubo! Soy {bot_name} de {business_name}. Estoy aqui para ayudarte con {biz['products_label']}. Que necesitas?",
+            f"Hola! Soy {bot_name} de {business_name}. Estoy aqui para ayudarte con {biz['products_label']}. Que necesitas?",
         ]
         return random.choice(opts)
 
@@ -1062,12 +1096,15 @@ def build_tenant_response(
                 price = p.get("price", 0)
                 wa_url = p.get("whatsapp_url", "")
                 name = p.get("name", "Producto")
+                description = p.get("description", "")
                 price_fmt = f"${int(float(price)):,}".replace(",", ".") if price else ""
-                line = f"- {name}"
+                line = f"*{name}*"
                 if price_fmt:
                     line += f" - {price_fmt}"
+                if description:
+                    line += f"\n  {description}"
                 if wa_url:
-                    line += f"\n  {wa_url}"
+                    line += f"\n  Ver producto: {wa_url}"
                 response += line + "\n\n"
             response += "Te interesa alguno? 😊"
             return response
