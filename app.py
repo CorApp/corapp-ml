@@ -1445,27 +1445,32 @@ def extract_delivery_endpoint():
         return jsonify({"success": False, "error": "Mensaje vacio"})
 
     result = extract_delivery(message)
+    info = result.get('info', {})
 
-    if result.get('error'):
+    # Extraer dirección del texto si el ML no la encontró estructuralmente
+    address = info.get('address') if info else None
+    if not address and not result.get('error'):
+        address = message.strip()
+
+    # Solo fallamos si no hay absolutamente nada
+    if not address:
         return jsonify({
             "success": False,
-            "error": result.get('errorMessage', 'Error extrayendo datos'),
+            "error": result.get('errorMessage', 'No se pudo extraer la dirección'),
         })
 
-    info = result.get('info', {})
     return jsonify({
         "success": True,
-        "name": info.get('userName'),
-        "address": info.get('address'),
-        "indications": info.get('indications', ''),
-        "location": info.get('locationDelivery'),
-        "day": info.get('dayDelivery'),
-        "latitude": info.get('latitude', 4.7110),
-        "longitude": info.get('longitude', -74.0721),
+        "name": info.get('userName') if info else None,
+        "address": address,
+        "indications": info.get('indications', '') if info else '',
+        "location": info.get('locationDelivery') if info else None,
+        "day": info.get('dayDelivery') if info else None,
+        "latitude": info.get('latitude', 4.7110) if info else 4.7110,
+        "longitude": info.get('longitude', -74.0721) if info else -74.0721,
     })
 
 # v5.0.0 — modelo completo con fuzzy search, aliases colombianos,
 # respuestas empáticas y análisis de fallos
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-    
