@@ -995,7 +995,7 @@ def find_products_by_query(query: str, products: list) -> list:
             exact_category_matches.append(product)
 
     if exact_category_matches:
-        return exact_category_matches[:5]
+        return exact_category_matches[:8]
 
     # ============================================================
     # PASO 1B: Coincidencia fuzzy estricta — query contra categoría completa
@@ -1029,7 +1029,7 @@ def find_products_by_query(query: str, products: list) -> list:
 
     if fuzzy_category_matches:
         fuzzy_category_matches.sort(key=lambda x: x[1], reverse=True)
-        return [m[0] for m in fuzzy_category_matches[:5]]
+        return [m[0] for m in fuzzy_category_matches[:8]]
 
     # ============================================================
     # PASO 2: Si no hay resultados por categoría, buscar por nombre
@@ -1057,7 +1057,7 @@ def find_products_by_query(query: str, products: list) -> list:
                 name_matches.append((product, best))
 
     name_matches.sort(key=lambda x: x[1], reverse=True)
-    return [m[0] for m in name_matches[:3]]
+    return [m[0] for m in name_matches[:5]]
 
 
 def build_tenant_response(
@@ -1274,12 +1274,15 @@ BUSINESS_CONTEXT: dict[str, list[str]] = {
         "closet", "closets", "armario", "armarios", "comoda", "comodas",
         "escritorio", "escritorios", "estante", "estantes", "biblioteca",
         "biblioteca", "buro", "buros", "camarote", "camarotes", "litera",
-        "literas", "colchon", "colchones", "sala", "alcoba", "habitacion",
-        "comedor", "mueble", "muebles", "madera", "tapizado", "espejo",
+        "literas", "colchon", "colchones", "sala", "salas", "alcoba", "habitacion",
+        "comedor", "comedores", "mueble", "muebles", "madera", "tapizado", "espejo",
         "espejos", "tocador", "tocadores", "alacena", "alacenas", "vitrina",
         "vitrinas", "rinconera", "rinconeras", "baul", "baules", "puff",
         "taburete", "taburetes", "mecedora", "mecedoras", "poltrona",
         "poltronas", "sillon", "sillones", "zapatera", "zapateras",
+        "sofas camas", "sofa cama", "sofacama", "sofacamas",
+        "sala comedor", "sala y comedor", "alcoba", "alcobas",
+        "mesa comedor", "silla comedor", "sillas comedor",
     ],
     "frutas_verduras": [
         "manzana", "manzanas", "pera", "peras", "naranja", "naranjas",
