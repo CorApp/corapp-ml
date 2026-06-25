@@ -972,8 +972,9 @@ DEFAULT_BUSINESS = {
 def find_products_by_query(query: str, products: list) -> list:
     """
     Busca productos:
-    1. Primero por categoría — si encuentra productos en esa categoría los retorna todos
-    2. Si no hay coincidencias por categoría, busca por nombre de producto
+    1. Primero por categoría exacta — coincidencia exacta de la query con la categoría
+    2. Si no hay exacta, busca categoría con fuzzy pero estricto
+    3. Si no hay resultados por categoría, busca por nombre de producto
     """
     if not products or not query:
         return []
@@ -982,37 +983,53 @@ def find_products_by_query(query: str, products: list) -> list:
     query_words = [w for w in query_norm.split() if len(w) >= 3]
 
     # ============================================================
-    # PASO 1: Buscar por categoría
+    # PASO 1A: Coincidencia exacta de la query con la categoría
     # ============================================================
-    category_matches = []
+    exact_category_matches = []
+    for product in products:
+        category_norm = normalize(str(product.get("category", "")))
+        if not category_norm:
+            continue
+        # Exacta: query == categoría
+        if query_norm == category_norm:
+            exact_category_matches.append(product)
+
+    if exact_category_matches:
+        return exact_category_matches[:5]
+
+    # ============================================================
+    # PASO 1B: Coincidencia fuzzy estricta — query contra categoría completa
+    # No usar coincidencia parcial (word in category) para evitar mezclar categorías
+    # ============================================================
+    fuzzy_category_matches = []
     for product in products:
         category_norm = normalize(str(product.get("category", "")))
         if not category_norm:
             continue
 
-        # Coincidencia exacta de palabra
-        for word in query_words:
-            if word in category_norm or category_norm in word:
-                category_matches.append(product)
-                break
-        else:
-            # Similitud fuzzy con la categoría
-            cat_score = max(
-                levenshtein(query_norm, category_norm),
-                jaro_winkler(query_norm, category_norm),
-            )
-            # También probar cada palabra del query contra la categoría
+        # Similitud de la query completa contra la categoría completa
+        cat_score = max(
+            levenshtein(query_norm, category_norm),
+            jaro_winkler(query_norm, category_norm),
+        )
+        if cat_score >= 0.85:
+            fuzzy_category_matches.append((product, cat_score))
+            continue
+
+        # Similitud de cada palabra del query contra la categoría completa
+        # Solo si la categoría es una sola palabra
+        if ' ' not in category_norm:
             word_score = max(
                 (max(levenshtein(w, category_norm), jaro_winkler(w, category_norm))
                  for w in query_words),
                 default=0
             )
-            best = max(cat_score, word_score)
-            if best >= 0.75:
-                category_matches.append(product)
+            if word_score >= 0.88:
+                fuzzy_category_matches.append((product, word_score))
 
-    if category_matches:
-        return category_matches[:5]  # Retornar hasta 5 productos de la categoría
+    if fuzzy_category_matches:
+        fuzzy_category_matches.sort(key=lambda x: x[1], reverse=True)
+        return [m[0] for m in fuzzy_category_matches[:5]]
 
     # ============================================================
     # PASO 2: Si no hay resultados por categoría, buscar por nombre
