@@ -30,6 +30,8 @@ import random
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
+from telegram_service import create_tenant_group
+from telethon.errors import FloodWaitError
 
 app = Flask(__name__)
 model = None
@@ -1069,7 +1071,7 @@ def health():
         'status': 'ok',
         'service': 'corapp-ml',
         'version': '5.0.0',
-        'endpoints': ['/predict', '/respond-tenant', '/extract-delivery', '/analyze-failures', '/retrain'],
+        'endpoints': ['/predict', '/respond-tenant', '/extract-delivery', '/analyze-failures', '/retrain', '/create-group'],
     })
 
 
@@ -1207,9 +1209,36 @@ def retrain():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+@app.route('/create-group', methods=['POST'])
+def create_group():
+    """Crea un grupo de Telegram para un tenant nuevo. Requiere X-Service-Secret."""
+    secret = request.headers.get('X-Service-Secret')
+    if secret != os.environ.get('TELEGRAM_SERVICE_SECRET'):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.get_json() or {}
+    business_name = data.get('business_name')
+
+    if not business_name:
+        return jsonify({"error": "business_name es requerido"}), 400
+
+    try:
+        result = create_tenant_group(business_name)
+        return jsonify(result), 200
+    except FloodWaitError as e:
+        print(f"⚠️ FloodWaitError creando grupo Telegram: esperar {e.seconds}s")
+        return jsonify({
+            "error": f"Telegram limitó la cuenta temporalmente. Reintenta en {e.seconds} segundos."
+        }), 429
+    except Exception as e:
+        print(f"❌ Error creando grupo Telegram: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 # ============================================================
 # v5.0.0 — modelo completo con fuzzy search, aliases colombianos,
 # respuestas empáticas, análisis de fallos y soporte multi-tenant
+# v5.1.0 — agregado módulo Telegram para creación de grupos de tenants
 # ============================================================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
