@@ -1113,6 +1113,7 @@ def respond_tenant():
             'response': f'Hola! Soy {bot_name} de {business_name}. En que te puedo ayudar? {catalog_url}',
             'intent': 'saludo',
             'confidence': 1.0,
+            'matched_product': None,
         })
 
     if is_product_query(message, products, tenant.get("business_type", "")):
@@ -1125,10 +1126,32 @@ def respond_tenant():
 
     response = build_tenant_response(intent, confidence, message, tenant, products)
 
+    # Detectar producto específico mencionado
+    matched_product = None
+    if intent == 'consulta_producto' and products:
+        product_from_url = extract_product_from_url(message, products)
+        if product_from_url:
+            matched_product = product_from_url.get('name')
+        else:
+            matching = find_products_by_query(message, products)
+            # Solo retornar matched_product si encontró exactamente 1 producto
+            # o si el primero tiene score muy alto (búsqueda específica, no categoría)
+            if len(matching) == 1:
+                matched_product = matching[0].get('name')
+            elif len(matching) > 1:
+                # Si todos son de la misma categoría → es búsqueda por categoría, no producto específico
+                categories = set(normalize(str(p.get('category', ''))) for p in matching)
+                query_norm = normalize(message)
+                first_cat = normalize(str(matching[0].get('category', '')))
+                # Si el query coincide exactamente con la categoría → no es producto específico
+                if query_norm != first_cat and len(categories) > 1:
+                    matched_product = matching[0].get('name')
+
     return jsonify({
         'response': response,
         'intent': intent,
         'confidence': round(confidence, 4),
+        'matched_product': matched_product,
     })
 
 
@@ -1239,6 +1262,7 @@ def create_group():
 # v5.0.0 — modelo completo con fuzzy search, aliases colombianos,
 # respuestas empáticas, análisis de fallos y soporte multi-tenant
 # v5.1.0 — agregado módulo Telegram para creación de grupos de tenants
+# v5.2.0 — /respond-tenant ahora retorna matched_product
 # ============================================================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
