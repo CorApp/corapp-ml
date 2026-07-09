@@ -788,22 +788,70 @@ def extract_product_from_url(message: str, products: list) -> dict | None:
     return None
 
 
-def find_products_by_query(query: str, products: list) -> list:
+def find_products_by_query(query: str, products: list) -> tuple[list, str]:
+    """
+    Busca productos por query del cliente.
+
+    Retorna (productos, método) donde método es:
+    - 'category_exact'  → query coincide exactamente con una categoría
+    - 'category_fuzzy'  → query coincide por fuzzy con una categoría
+    - 'product_name'    → query coincide con nombre de producto específico
+    - 'none'            → sin resultados
+
+    IMPORTANTE: aunque encuentre matches por categoría, siempre verifica
+    si el query también coincide con un producto específico por nombre.
+    Si coincide mejor con el nombre → retorna ese producto como 'product_name'.
+    """
     if not products or not query:
-        return []
+        return [], 'none'
 
     query_norm = normalize(query)
     query_words = [w for w in query_norm.split() if len(w) >= 3]
 
-    # Paso 1A: coincidencia exacta con categoría
+    # ── PASO 1: Buscar siempre por nombre de producto específico ──────────
+    # Esto corre SIEMPRE, independiente de si hay match por categoría
+    best_name_product = None
+    best_name_score = 0.0
+
+    for product in products:
+        name_norm = normalize(str(product.get("name", "")))
+        name_words = [w for w in name_norm.split() if len(w) >= 3]
+
+        # Score query completo vs nombre completo
+        score = max(
+            levenshtein(query_norm, name_norm),
+            jaro_winkler(query_norm, name_norm),
+        )
+
+        # Score palabra por palabra del query vs nombre
+        for w in query_words:
+            ws = max(levenshtein(w, name_norm), jaro_winkler(w, name_norm))
+            if ws > score:
+                score = ws
+            # Coincidencia exacta de palabra dentro del nombre
+            if w in name_words or w in name_norm:
+                score = max(score, 0.92)
+
+        # Score palabras del nombre vs query (bidireccional)
+        for nw in name_words:
+            nws = max(levenshtein(nw, query_norm), jaro_winkler(nw, query_norm))
+            if nws > score:
+                score = nws
+            if nw in query_words or nw in query_norm:
+                score = max(score, 0.92)
+
+        if score > best_name_score:
+            best_name_score = score
+            best_name_product = product
+
+    # ── PASO 2: Buscar por categoría ──────────────────────────────────────
+    # Paso 2A: coincidencia exacta con categoría
     exact_category_matches = [
         p for p in products
         if normalize(str(p.get("category", ""))) == query_norm
     ]
-    if exact_category_matches:
-        return exact_category_matches[:8]
 
-    # Paso 1B: fuzzy estricto contra categoría
+    # Paso 2B: fuzzy estricto contra categoría
     fuzzy_category_matches = []
     for product in products:
         category_norm = normalize(str(product.get("category", "")))
@@ -821,11 +869,34 @@ def find_products_by_query(query: str, products: list) -> list:
             if word_score >= 0.88:
                 fuzzy_category_matches.append((product, word_score))
 
+    best_cat_score = 0.0
+    if exact_category_matches:
+        best_cat_score = 1.0
+    elif fuzzy_category_matches:
+        best_cat_score = max(s for _, s in fuzzy_category_matches)
+
+    # ── PASO 3: Decidir — producto específico gana si su score es mayor ───
+    # Si el nombre del producto matchea mejor que la categoría → producto específico
+    PRODUCT_NAME_THRESHOLD = 0.75
+    if (best_name_product and
+        best_name_score >= PRODUCT_NAME_THRESHOLD and
+        best_name_score > best_cat_score):
+        return [best_name_product], 'product_name'
+
+    # Si hay match exacto de categoría → categoría
+    if exact_category_matches:
+        return exact_category_matches[:8], 'category_exact'
+
+    # Si hay match fuzzy de categoría → categoría
     if fuzzy_category_matches:
         fuzzy_category_matches.sort(key=lambda x: x[1], reverse=True)
-        return [m[0] for m in fuzzy_category_matches[:8]]
+        return [m[0] for m in fuzzy_category_matches[:8]], 'category_fuzzy'
 
-    # Paso 2: buscar por nombre
+    # Si hay match por nombre aunque no ganó → retornarlo igual
+    if best_name_product and best_name_score >= PRODUCT_NAME_THRESHOLD:
+        return [best_name_product], 'product_name'
+
+    # Paso 2C: búsqueda por nombre más amplia (umbral más bajo)
     name_matches = []
     for product in products:
         name_norm = normalize(str(product.get("name", "")))
@@ -844,7 +915,10 @@ def find_products_by_query(query: str, products: list) -> list:
                 name_matches.append((product, best))
 
     name_matches.sort(key=lambda x: x[1], reverse=True)
-    return [m[0] for m in name_matches[:5]]
+    if name_matches:
+        return [m[0] for m in name_matches[:5]], 'product_name'
+
+    return [], 'none'
 
 
 def is_product_query(message: str, products: list, business_type: str = "") -> bool:
@@ -919,7 +993,11 @@ def build_tenant_response(intent: str, confidence: float, message: str, tenant: 
         delivery_text = f"hacemos domicilio en {locations_text} y tambien puedes recoger en el punto"
 
     product_from_url = extract_product_from_url(message, products)
-    matching_products = [product_from_url] if product_from_url else find_products_by_query(message, products)
+    if product_from_url:
+        matching_products = [product_from_url]
+        search_method = 'product_name'
+    else:
+        matching_products, search_method = find_products_by_query(message, products)
 
     if intent == "saludo":
         return random.choice([
@@ -930,7 +1008,8 @@ def build_tenant_response(intent: str, confidence: float, message: str, tenant: 
 
     elif intent == "consulta_producto":
         if matching_products:
-            if product_from_url and len(matching_products) == 1:
+            # Producto específico — mostrar ficha detallada
+            if search_method == 'product_name':
                 p = matching_products[0]
                 price = p.get("price", 0)
                 price_fmt = f"${int(float(price)):,}".replace(",", ".") if price else ""
@@ -939,6 +1018,8 @@ def build_tenant_response(intent: str, confidence: float, message: str, tenant: 
                 if p.get("description"): response += f"\n\n{p['description']}"
                 if p.get("whatsapp_url"): response += f"\n\nVer en catalogo: {p['whatsapp_url']}"
                 return response + "\n\n¿Te gustaria pedirlo? 😊"
+
+            # Categoría — mostrar lista
             response = f"Claro! {bus_emoji} Encontre estos productos que te pueden interesar:\n\n"
             for p in matching_products:
                 price = p.get("price", 0)
@@ -1126,26 +1207,16 @@ def respond_tenant():
 
     response = build_tenant_response(intent, confidence, message, tenant, products)
 
-    # Detectar producto específico mencionado
+    # Detectar producto específico para enviar media
     matched_product = None
     if intent == 'consulta_producto' and products:
         product_from_url = extract_product_from_url(message, products)
         if product_from_url:
             matched_product = product_from_url.get('name')
         else:
-            matching = find_products_by_query(message, products)
-            # Solo retornar matched_product si encontró exactamente 1 producto
-            # o si el primero tiene score muy alto (búsqueda específica, no categoría)
-            if len(matching) == 1:
+            matching, search_method = find_products_by_query(message, products)
+            if matching and search_method == 'product_name':
                 matched_product = matching[0].get('name')
-            elif len(matching) > 1:
-                # Si todos son de la misma categoría → es búsqueda por categoría, no producto específico
-                categories = set(normalize(str(p.get('category', ''))) for p in matching)
-                query_norm = normalize(message)
-                first_cat = normalize(str(matching[0].get('category', '')))
-                # Si el query coincide exactamente con la categoría → no es producto específico
-                if query_norm != first_cat and len(categories) > 1:
-                    matched_product = matching[0].get('name')
 
     return jsonify({
         'response': response,
