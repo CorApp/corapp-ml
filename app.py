@@ -1195,6 +1195,7 @@ def respond_tenant():
             'intent': 'saludo',
             'confidence': 1.0,
             'matched_product': None,
+            'matched_product_url': None,
         })
 
     if is_product_query(message, products, tenant.get("business_type", "")):
@@ -1207,22 +1208,27 @@ def respond_tenant():
 
     response = build_tenant_response(intent, confidence, message, tenant, products)
 
-    # Detectar producto específico para enviar media
+    # Detectar producto específico para que el backend guarde el contexto
+    # (pending_product_url / pending_product_name) sin volver a buscarlo.
     matched_product = None
+    matched_product_url = None
     if intent == 'consulta_producto' and products:
         product_from_url = extract_product_from_url(message, products)
         if product_from_url:
             matched_product = product_from_url.get('name')
+            matched_product_url = product_from_url.get('whatsapp_url')
         else:
             matching, search_method = find_products_by_query(message, products)
             if matching and search_method == 'product_name':
                 matched_product = matching[0].get('name')
+                matched_product_url = matching[0].get('whatsapp_url')
 
     return jsonify({
         'response': response,
         'intent': intent,
         'confidence': round(confidence, 4),
         'matched_product': matched_product,
+        'matched_product_url': matched_product_url,
     })
 
 
