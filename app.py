@@ -840,6 +840,13 @@ def find_products_by_query(query: str, products: list) -> tuple[list, str]:
             if nw in query_words or nw in query_norm:
                 score = max(score, 0.92)
 
+        # Si TODAS las palabras del query aparecen en el nombre del producto,
+        # es un match completo por nombre — debe ganarle a un match parcial
+        # de categoría por una sola palabra (ej: "combo" vs "combos" = 0.96,
+        # pero "combo princesa" completo en el nombre debe pesar más que eso)
+        if query_words and all(w in name_norm for w in query_words):
+            score = max(score, 0.97)
+
         if score > best_name_score:
             best_name_score = score
             best_name_product = product
