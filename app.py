@@ -27,6 +27,7 @@ import json
 import re
 import unicodedata
 import random
+import itertools
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
@@ -788,19 +789,122 @@ def extract_product_from_url(message: str, products: list) -> dict | None:
     return None
 
 
+# ============================================================
+# MATCH ESTRICTO DE CATEGORÍA (con prioridad absoluta)
+# ============================================================
+
+# Palabras de relleno comunes en mensajes de WhatsApp que no aportan
+# significado de categoría/producto — se descartan antes de comparar.
+# Alcance decidido explícitamente: esto permite detectar la categoría
+# dentro de frases más largas ("quiero ver los combos" → "combos"),
+# pero NO absorbe calificadores de producto ("princesa" en "combo
+# princesa" no está aquí, así que esa frase no se reduce a "combo").
+CATEGORY_FILLER_WORDS = {
+    "quiero", "ver", "veo", "los", "las", "el", "la", "un", "una",
+    "unos", "unas", "por", "favor", "porfa", "porfavor", "dame",
+    "muestrame", "muéstrame", "enseñame", "enséñame", "mostrar",
+    "tienen", "tienes", "hay", "algo", "de", "en", "son", "es",
+    "que", "para", "con", "y", "o", "me", "puedo", "podria",
+    "podría", "quisiera", "busco", "buscando", "necesito", "tambien",
+    "también", "pls", "please", "oye", "hola",
+}
+
+
+def _word_form_variants(word: str) -> set[str]:
+    """
+    Genera variantes simples singular/plural de una palabra normalizada,
+    sin depender de scoring fuzzy — es una regla determinística, no
+    aproximada, pensada para que "sofa" == "sofas" o "comedor" ==
+    "comedores" cuenten como coincidencia EXACTA de categoría.
+    """
+    variants = {word}
+    if word.endswith('es') and len(word) > 4:
+        variants.add(word[:-2])          # comedores -> comedor
+    if word.endswith('s') and len(word) > 3:
+        variants.add(word[:-1])          # combos -> combo
+    if not word.endswith('s'):
+        variants.add(word + 's')         # sofa -> sofas
+        variants.add(word + 'es')        # comedor -> comedores
+    return variants
+
+
+def _category_phrase_variants(category_norm: str) -> set[str]:
+    """Variantes de una categoría (posiblemente multi-palabra) combinando
+    las variantes singular/plural de cada palabra que la compone."""
+    words = category_norm.split()
+    if not words:
+        return set()
+    per_word_variants = [_word_form_variants(w) for w in words]
+    return {' '.join(combo) for combo in itertools.product(*per_word_variants)}
+
+
+def _match_category_exact_or_phrase(query_norm: str, products: list) -> list:
+    """
+    PASO 0 de find_products_by_query — prioridad absoluta de categoría.
+
+    Retorna la lista de productos cuya categoría coincide con el query,
+    ya sea:
+    a) literalmente (forma actual de la categoría en la base), o
+    b) en singular/plural ("sofas" cliente vs "Sofá" categoría), o
+    c) como núcleo de una frase más larga tras quitar palabras de
+       relleno ("quiero ver los combos" -> núcleo "combos").
+
+    Si no hay match, retorna [] y el flujo sigue con el scoring normal
+    (por nombre de producto y luego categoría fuzzy).
+    """
+    core_words = [w for w in query_norm.split() if w not in CATEGORY_FILLER_WORDS]
+    core_phrase = ' '.join(core_words)
+
+    if not core_phrase:
+        return []
+
+    matches = []
+    for product in products:
+        category_norm = normalize(str(product.get("category", "")))
+        if not category_norm:
+            continue
+        variants = _category_phrase_variants(category_norm)
+        if query_norm in variants or core_phrase in variants:
+            matches.append(product)
+
+    return matches
+
+
 def find_products_by_query(query: str, products: list) -> tuple[list, str]:
     """
     Busca productos por query del cliente.
 
     Retorna (productos, método) donde método es:
-    - 'category_exact'  → query coincide exactamente con una categoría
-    - 'category_fuzzy'  → query coincide por fuzzy con una categoría
+    - 'category_exact'  → query coincide con una categoría (literal, plural/
+                           singular, o dentro de una frase con relleno)
+    - 'category_fuzzy'  → query coincide por fuzzy (typo) con una categoría
     - 'product_name'    → query coincide con nombre de producto específico
     - 'none'            → sin resultados
 
-    IMPORTANTE: aunque encuentre matches por categoría, siempre verifica
-    si el query también coincide con un producto específico por nombre.
-    Si coincide mejor con el nombre → retorna ese producto como 'product_name'.
+    PRIORIDAD ABSOLUTA DE CATEGORÍA (fix — ver PASO 0):
+    Cuando el query es (o contiene, quitando palabras de relleno) el nombre
+    de una categoría — en su forma literal o en singular/plural — eso
+    CORTOCIRCUITA el flujo: se retorna la lista de esa categoría de inmediato,
+    sin pasar por el scoring de nombre de producto. Antes, ese match competía
+    por score contra nombres de producto y a veces perdía (ej: "combos" vs
+    categoría "Combos" con score 1.0, pero un producto cuyo nombre contenía
+    parcialmente esas letras podía acercarse). Esto ya no puede pasar: si hay
+    match de categoría en PASO 0, no se evalúa ningún producto por nombre.
+
+    ALCANCE DECIDIDO EXPLÍCITAMENTE (no implícito): el cortocircuito de
+    categoría SÍ cubre frases más largas que solo contienen el nombre de la
+    categoría más palabras de relleno ("quiero ver los combos" → detecta
+    "combos" tras quitar "quiero ver los"). NO cubre frases que además traen
+    un calificador de producto específico ("combo princesa" → "princesa" no
+    es relleno, así que no dispara el cortocircuito y cae al scoring normal,
+    donde debe ganar 'product_name' — comportamiento ya cubierto por el fix
+    anterior de esta misma función).
+
+    CONTRATO CON EL BACKEND: cuando el método retornado es 'category_exact'
+    o 'category_fuzzy', el caller (/respond-tenant) NO debe setear
+    matched_product — eso solo aplica a 'product_name'. Este contrato ya
+    está implementado así en el endpoint (solo llena matched_product cuando
+    search_method == 'product_name'), así que no requiere cambios ahí.
     """
     if not products or not query:
         return [], 'none'
@@ -808,8 +912,13 @@ def find_products_by_query(query: str, products: list) -> tuple[list, str]:
     query_norm = normalize(query)
     query_words = [w for w in query_norm.split() if len(w) >= 3]
 
+    # ── PASO 0: Cortocircuito de categoría — prioridad absoluta ────────────
+    category_match_products = _match_category_exact_or_phrase(query_norm, products)
+    if category_match_products:
+        return category_match_products[:8], 'category_exact'
+
     # ── PASO 1: Buscar siempre por nombre de producto específico ──────────
-    # Esto corre SIEMPRE, independiente de si hay match por categoría
+    # Esto corre SIEMPRE que no hubo match de categoría en el PASO 0
     best_name_product = None
     best_name_score = 0.0
 
@@ -851,14 +960,8 @@ def find_products_by_query(query: str, products: list) -> tuple[list, str]:
             best_name_score = score
             best_name_product = product
 
-    # ── PASO 2: Buscar por categoría ──────────────────────────────────────
-    # Paso 2A: coincidencia exacta con categoría
-    exact_category_matches = [
-        p for p in products
-        if normalize(str(p.get("category", ""))) == query_norm
-    ]
-
-    # Paso 2B: fuzzy estricto contra categoría
+    # ── PASO 2: Categoría por fuzzy (typos) — ya no incluye el caso exacto,
+    # ese se resolvió en el PASO 0 con prioridad absoluta ──────────────────
     fuzzy_category_matches = []
     for product in products:
         category_norm = normalize(str(product.get("category", "")))
@@ -876,23 +979,14 @@ def find_products_by_query(query: str, products: list) -> tuple[list, str]:
             if word_score >= 0.88:
                 fuzzy_category_matches.append((product, word_score))
 
-    best_cat_score = 0.0
-    if exact_category_matches:
-        best_cat_score = 1.0
-    elif fuzzy_category_matches:
-        best_cat_score = max(s for _, s in fuzzy_category_matches)
+    best_cat_score = max((s for _, s in fuzzy_category_matches), default=0.0)
 
     # ── PASO 3: Decidir — producto específico gana si su score es mayor ───
-    # Si el nombre del producto matchea mejor que la categoría → producto específico
     PRODUCT_NAME_THRESHOLD = 0.75
     if (best_name_product and
         best_name_score >= PRODUCT_NAME_THRESHOLD and
         best_name_score > best_cat_score):
         return [best_name_product], 'product_name'
-
-    # Si hay match exacto de categoría → categoría
-    if exact_category_matches:
-        return exact_category_matches[:8], 'category_exact'
 
     # Si hay match fuzzy de categoría → categoría
     if fuzzy_category_matches:
@@ -903,7 +997,7 @@ def find_products_by_query(query: str, products: list) -> tuple[list, str]:
     if best_name_product and best_name_score >= PRODUCT_NAME_THRESHOLD:
         return [best_name_product], 'product_name'
 
-    # Paso 2C: búsqueda por nombre más amplia (umbral más bajo)
+    # Paso 3B: búsqueda por nombre más amplia (umbral más bajo)
     name_matches = []
     for product in products:
         name_norm = normalize(str(product.get("name", "")))
