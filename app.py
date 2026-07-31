@@ -1155,6 +1155,43 @@ def is_product_query(message: str, products: list, business_type: str = "") -> b
 # GENERADOR DE RESPUESTAS PARA TENANTS
 # ============================================================
 
+def format_price(price) -> str:
+    """
+    Formatea un precio a '$1.234.567' de forma SEGURA — nunca lanza
+    excepción. Un precio con formato raro en un solo producto no debe
+    tumbar toda la respuesta cuando se está listando una categoría entera
+    (bug real: price="2.700.000" con puntos como separador de miles hacía
+    fallar int(float(price)) y /respond-tenant no respondía nada).
+
+    Tolera: números, strings con puntos de miles ("2.700.000"), strings
+    con coma decimal ("2700000,00"), símbolo $, espacios, vacío o None.
+    Si de verdad no se puede interpretar, retorna "" en vez de romper la
+    petición completa.
+    """
+    if price is None or price == "":
+        return ""
+    try:
+        value = float(price)
+    except (TypeError, ValueError):
+        s = str(price).strip().replace("$", "").replace(" ", "")
+        if re.match(r'^\d{1,3}(\.\d{3})+$', s):
+            # "2.700.000" — puntos como separador de miles, sin decimales
+            s = s.replace(".", "")
+        elif re.search(r',\d{1,2}$', s):
+            # "2.700.000,00" o "2700000,00" — coma decimal estilo latino
+            s = s.replace(".", "").replace(",", ".")
+        else:
+            s = s.replace(",", "")
+        try:
+            value = float(s)
+        except (TypeError, ValueError):
+            return ""
+    try:
+        return f"${int(value):,}".replace(",", ".")
+    except (TypeError, ValueError, OverflowError):
+        return ""
+
+
 def build_tenant_response(intent: str, confidence: float, message: str, tenant: dict, products: list) -> str:
     bot_name = tenant.get("bot_name", "tu asistente")
     business_name = tenant.get("business_name", "nuestro negocio")
@@ -1201,8 +1238,7 @@ def build_tenant_response(intent: str, confidence: float, message: str, tenant: 
             # Producto específico — mostrar ficha detallada
             if search_method == 'product_name':
                 p = matching_products[0]
-                price = p.get("price", 0)
-                price_fmt = f"${int(float(price)):,}".replace(",", ".") if price else ""
+                price_fmt = format_price(p.get("price", 0))
                 response = f"{bus_emoji} *{p.get('name', 'Producto')}*"
                 if price_fmt: response += f"\nPrecio: {price_fmt}"
                 if p.get("description"): response += f"\n\n{p['description']}"
@@ -1212,8 +1248,7 @@ def build_tenant_response(intent: str, confidence: float, message: str, tenant: 
             # Categoría — mostrar lista
             response = f"Claro! {bus_emoji} Encontre estos productos que te pueden interesar:\n\n"
             for p in matching_products:
-                price = p.get("price", 0)
-                price_fmt = f"${int(float(price)):,}".replace(",", ".") if price else ""
+                price_fmt = format_price(p.get("price", 0))
                 line = f"*{p.get('name', 'Producto')}*"
                 if price_fmt: line += f" - {price_fmt}"
                 if p.get("description"): line += f"\n  {p['description']}"
