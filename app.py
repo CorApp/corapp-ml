@@ -297,7 +297,16 @@ NOISE_PATTERNS = [
 def clean_noise(text: str) -> str:
     for p in NOISE_PATTERNS:
         text = re.sub(p, ' ', text, flags=re.IGNORECASE)
-    return re.sub(r'\s+', ' ', text).strip()
+    # IMPORTANTE: colapsar solo espacios/tabs horizontales, NUNCA saltos de
+    # línea. extract_labeled() y extract_address_indications() dependen de
+    # los \n reales para saber dónde termina cada campo (dirección, barrio,
+    # localidad, día). Si se colapsan aquí, un mensaje multilínea se vuelve
+    # una sola línea larga y la dirección "se come" todo lo que sigue
+    # (localidad, día) porque el regex de respaldo es greedy.
+    text = re.sub(r'[ \t]+', ' ', text)
+    text = re.sub(r'\n{2,}', '\n', text)  # colapsar líneas vacías múltiples
+    text = '\n'.join(line.strip() for line in text.split('\n'))
+    return text.strip()
 
 
 # ============================================================
@@ -514,8 +523,14 @@ def extract_address_indications(text: str) -> tuple:
                 indics.append(c)
 
     if not address:
+        # OJO: usar [ \t] en vez de \s — \s también matchea \n, y este
+        # regex de respaldo (re.search sin anclar a una línea) podía
+        # "tragarse" el resto del mensaje completo cuando el nombre y la
+        # dirección venían juntos en la misma línea (ej: "Maria Calle 5 #10-20
+        # \nBarrio X\nLunes" — sin este fix, address terminaba incluyendo
+        # también el barrio y el día de las líneas siguientes).
         m = re.search(
-            r'(' + ADDR_START + r'\s*[\w\s.\-#]+?\d+[\w\s.\-#]*\d*)',
+            r'(' + ADDR_START + r'[ \t]*[\w \t.\-#]+?\d+[\w \t.\-#]*\d*)',
             text, re.IGNORECASE
         )
         if m:
@@ -564,6 +579,44 @@ def extract_name(text: str):
 # ============================================================
 # EXTRACTOR PRINCIPAL
 # ============================================================
+
+def _strip_trailing_known_value(address: str, *values: str) -> str:
+    """
+    Recorta del final de `address` una repetición de un valor ya resuelto
+    por separado (localidad o día) que quedó pegada a la dirección.
+
+    Pasa esto SOLO en mensajes de una sola línea física sin comas ni saltos
+    de línea (ej: "Cra 74 # 160 - 83 Suba Lunes") — ahí el regex de
+    dirección no tiene ninguna marca estructural donde detenerse y captura
+    todo lo que sigue. Con saltos de línea o comas, extract_address_indications
+    ya delimita bien el campo y esta función no encuentra nada que recortar.
+    """
+    if not address:
+        return address
+    result = address
+    changed = True
+    while changed:
+        changed = False
+        stripped = result.rstrip(' .,-')
+        for value in values:
+            if not value:
+                continue
+            for variant in {value, value.lower(), normalize(value)}:
+                if not variant:
+                    continue
+                if (stripped.lower().endswith(variant.lower())
+                        and len(stripped) > len(variant)):
+                    cut_point = len(stripped) - len(variant)
+                    if stripped[cut_point - 1] in ' .,-':
+                        candidate = stripped[:cut_point].rstrip(' .,-')
+                        if len(candidate) >= 3:
+                            result = candidate
+                            changed = True
+                            break
+            if changed:
+                break
+    return result.strip()
+
 
 def extract_delivery(text: str, valid_locations=None, valid_days=None, valid_times=None) -> dict:
     if not text or not text.strip():
@@ -617,6 +670,11 @@ def extract_delivery(text: str, valid_locations=None, valid_days=None, valid_tim
 
     if not day and day_err:
         return {"error": True, "errorMessage": day_err, "info": None}
+
+    # Recortar localidad/día que hayan quedado pegados al final de la
+    # dirección en mensajes de una sola línea sin comas ni saltos de línea.
+    if address:
+        address = _strip_trailing_known_value(address, day or "", locality or "")
 
     missing = []
     if not address:
@@ -838,16 +896,30 @@ def _category_phrase_variants(category_norm: str) -> set[str]:
     return {' '.join(combo) for combo in itertools.product(*per_word_variants)}
 
 
+def _category_word_variants(category_norm: str) -> set[str]:
+    """Unión de las variantes singular/plural de CADA palabra de la
+    categoría por separado (no de la frase completa) — permite reconocer
+    categorías multi-palabra ("Combos de muebles") cuando el cliente solo
+    menciona una parte ("combos", "muebles")."""
+    variants = set()
+    for w in category_norm.split():
+        variants |= _word_form_variants(w)
+    return variants
+
+
 def _match_category_exact_or_phrase(query_norm: str, products: list) -> list:
     """
     PASO 0 de find_products_by_query — prioridad absoluta de categoría.
 
     Retorna la lista de productos cuya categoría coincide con el query,
-    ya sea:
+    por cualquiera de estas vías:
     a) literalmente (forma actual de la categoría en la base), o
     b) en singular/plural ("sofas" cliente vs "Sofá" categoría), o
     c) como núcleo de una frase más larga tras quitar palabras de
-       relleno ("quiero ver los combos" -> núcleo "combos").
+       relleno ("quiero ver los combos" -> núcleo "combos"), o
+    d) palabra por palabra contra una categoría de varias palabras
+       ("combos" o "muebles" sueltos vs categoría "Combos de muebles"
+       — el cliente no tiene por qué repetir la categoría completa).
 
     Si no hay match, retorna [] y el flujo sigue con el scoring normal
     (por nombre de producto y luego categoría fuzzy).
@@ -863,8 +935,25 @@ def _match_category_exact_or_phrase(query_norm: str, products: list) -> list:
         category_norm = normalize(str(product.get("category", "")))
         if not category_norm:
             continue
-        variants = _category_phrase_variants(category_norm)
-        if query_norm in variants or core_phrase in variants:
+
+        # (a)(b)(c) — frase completa (o su núcleo) coincide con la categoría
+        phrase_variants = _category_phrase_variants(category_norm)
+        if query_norm in phrase_variants or core_phrase in phrase_variants:
+            matches.append(product)
+            continue
+
+        # (d) — cada palabra del núcleo del query aparece como palabra
+        # (o variante singular/plural) DENTRO de la categoría. Esto es lo
+        # que resuelve "combos" solo contra "Combos de muebles": no exige
+        # que el query repita la categoría completa, solo que todo lo que
+        # el cliente escribió (sin relleno) pertenezca a la categoría.
+        # "combo princesa" NO dispara esto porque "princesa" no es palabra
+        # de ninguna categoría — sigue cayendo en scoring de nombre de
+        # producto, igual que antes.
+        category_word_variants = _category_word_variants(category_norm)
+        if core_words and all(
+            _word_form_variants(w) & category_word_variants for w in core_words
+        ):
             matches.append(product)
 
     return matches
