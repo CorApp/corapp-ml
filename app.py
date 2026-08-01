@@ -1245,16 +1245,30 @@ def build_tenant_response(intent: str, confidence: float, message: str, tenant: 
                 if p.get("whatsapp_url"): response += f"\n\nVer en catalogo: {p['whatsapp_url']}"
                 return response + "\n\n¿Te gustaria pedirlo? 😊"
 
-            # Categoría — mostrar lista
+            # Categoría — mostrar lista (solo nombre, precio y link — sin
+            # descripción. Además de ser más limpio para una lista, evita
+            # superar el límite de 4096 caracteres de un mensaje de texto
+            # de WhatsApp: con la descripción completa de 2-3 productos ya
+            # se pasa ese límite, la API de Meta rechaza el envío y el bot
+            # queda "mudo" sin ningún error visible, porque el backend no
+            # revisa la respuesta del fetch a la Graph API.
             response = f"Claro! {bus_emoji} Encontre estos productos que te pueden interesar:\n\n"
             for p in matching_products:
                 price_fmt = format_price(p.get("price", 0))
                 line = f"*{p.get('name', 'Producto')}*"
                 if price_fmt: line += f" - {price_fmt}"
-                if p.get("description"): line += f"\n  {p['description']}"
                 if p.get("whatsapp_url"): line += f"\n  Ver producto: {p['whatsapp_url']}"
                 response += line + "\n\n"
-            return response + "Te interesa alguno? 😊"
+            response += "Te interesa alguno? 😊"
+
+            # Red de seguridad adicional: si aun así el mensaje quedó muy
+            # largo (categoría con muchos productos), cortar y mandar al
+            # catálogo en vez de arriesgar que WhatsApp rechace el envío.
+            WHATSAPP_SAFE_LIMIT = 3500
+            if len(response) > WHATSAPP_SAFE_LIMIT:
+                response = response[:WHATSAPP_SAFE_LIMIT].rsplit("\n\n", 1)[0]
+                response += f"\n\n...y más 😊 Ve el catálogo completo aquí: {catalog_url}"
+            return response
         elif catalog_url:
             return random.choice([
                 f"Claro! {bus_emoji} Puedes {biz['catalog_verb']} aqui: {catalog_url} Hay algo especifico que estes buscando?",
