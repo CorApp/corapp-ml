@@ -1230,10 +1230,11 @@ def build_tenant_response(intent: str, confidence: float, message: str, tenant: 
         matching_products, search_method = find_products_by_query(message, products)
 
     if intent == "saludo":
+        catalog_line = f" Puedes ver el catalogo completo aqui: {catalog_url}" if catalog_url else ""
         return random.choice([
-            f"Hola! Soy {bot_name} de {business_name}. Tenemos {biz['products_label']} {bus_emoji} y {delivery_text}. En que te puedo ayudar hoy?",
-            f"Hola! Bienvenido a {business_name}. Soy {bot_name}, tu asistente virtual. Que estas buscando hoy? {bus_emoji}",
-            f"Hola! Soy {bot_name} de {business_name}. Estoy aqui para ayudarte con {biz['products_label']}. Que necesitas?",
+            f"Hola! Soy {bot_name} de {business_name}. Tenemos {biz['products_label']} {bus_emoji} y {delivery_text}.{catalog_line} En que te puedo ayudar hoy?",
+            f"Hola! Bienvenido a {business_name}. Soy {bot_name}, tu asistente virtual.{catalog_line} Que estas buscando hoy? {bus_emoji}",
+            f"Hola! Soy {bot_name} de {business_name}. Estoy aqui para ayudarte con {biz['products_label']}.{catalog_line} Que necesitas?",
         ])
 
     elif intent == "consulta_producto":
@@ -1455,6 +1456,7 @@ def respond_tenant():
         except Exception:
             intent, confidence = 'unknown', 0.0
 
+    print(f"🔍 DEBUG mensaje={message!r} intent={intent} confidence={confidence}")
     response = build_tenant_response(intent, confidence, message, tenant, products)
 
     # Detectar producto específico para que el backend guarde el contexto
