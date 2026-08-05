@@ -43,14 +43,21 @@ model = None
 # ============================================================
 
 def normalize(text: str) -> str:
-    """Normaliza texto — minúsculas, sin tildes, sin espacios extra."""
+    """Normaliza texto — minúsculas, sin tildes, sin espacios extra, sin
+    puntuación de frase (?!¿¡.,;:). Sin esto, "mango?" nunca era igual a
+    "mango" en comparaciones exactas — bug real detectado en producción:
+    "Tienes mango?" no reconocía el producto porque la palabra extraída
+    era literalmente "mango?", no "mango". No afecta a extract_address_
+    indications() ni clean_noise(), que capturan el valor final por fuera
+    de esta función y sí preservan # y - para direcciones."""
     if not text:
         return ""
     text = text.lower().strip()
     text = unicodedata.normalize("NFD", text)
     text = "".join(c for c in text if unicodedata.category(c) != "Mn")
+    text = re.sub(r'[?!¿¡.,;:]+', ' ', text)
     text = re.sub(r'\s+', ' ', text)
-    return text
+    return text.strip()
 
 
 # ============================================================
@@ -331,7 +338,6 @@ def extract_labeled(text: str) -> dict:
                 fields[field] = val
     return fields
 
-
 # ============================================================
 # EXTRACCIÓN DE DÍA
 # ============================================================
@@ -406,7 +412,6 @@ def extract_day(text: str):
 
     return None, None
 
-
 # ============================================================
 # EXTRACCIÓN DE LOCALIDAD
 # ============================================================
@@ -451,7 +456,6 @@ def extract_locality(text: str):
         return None, "Lo sentimos, por ahora no llegamos a esa zona 😔"
 
     return None, None
-
 
 # ============================================================
 # EXTRACCIÓN DE DIRECCIÓN E INDICACIONES
@@ -544,7 +548,6 @@ def extract_address_indications(text: str) -> tuple:
             clean_indics.append(p)
 
     return address, ', '.join(clean_indics[:3])
-
 
 # ============================================================
 # EXTRACCIÓN DE NOMBRE
@@ -1437,7 +1440,14 @@ def respond_tenant():
             'matched_product_url': None,
         })
 
-    if is_product_query(message, products, tenant.get("business_type", "")):
+    # ✅ Regla determinística de respaldo: si el mensaje pide el catálogo
+    # literalmente, forzar consulta_catalogo directo. No depende del
+    # clasificador ML ni de is_product_query — evita que quede a merced
+    # de coincidencias fuzzy accidentales (ej: "regalas" comparte letras
+    # con nombres de producto como "Gala" y puede colar un match falso).
+    if re.search(r'\bcatalogo\b', normalize(message)):
+        intent, confidence = 'consulta_catalogo', 0.99
+    elif is_product_query(message, products, tenant.get("business_type", "")):
         intent, confidence = 'consulta_producto', 0.99
     else:
         try:
@@ -1579,6 +1589,8 @@ def create_group():
 # respuestas empáticas, análisis de fallos y soporte multi-tenant
 # v5.1.0 — agregado módulo Telegram para creación de grupos de tenants
 # v5.2.0 — /respond-tenant ahora retorna matched_product
+# v5.3.0 — normalize() quita puntuación de frase (fix "mango?");
+#          regla determinística para "catalogo" antes del clasificador
 # ============================================================
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
