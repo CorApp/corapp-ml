@@ -1517,6 +1517,50 @@ def extract_delivery_endpoint():
     })
 
 
+@app.route('/extract-address', methods=['POST'])
+def extract_address_endpoint():
+    """
+    Extrae SOLO dirección y localidad de un mensaje — pensado para el paso
+    "dirección" del flujo guiado de CorApp, donde el día llega DESPUÉS en
+    su propio paso (con botones). /extract-delivery no sirve aquí porque
+    exige encontrar los 5 campos (incluido día) para considerar el mensaje
+    exitoso — con un mensaje de solo dirección, día SIEMPRE falta, así que
+    SIEMPRE devolvía error aunque la dirección y localidad se hubieran
+    reconocido bien. Reutiliza las mismas funciones de extracción ya
+    probadas (extract_labeled, extract_address_indications, extract_locality),
+    solo que sin la exigencia del día.
+    """
+    data = request.get_json() or {}
+    message = data.get('message', '')
+
+    if not message:
+        return jsonify({"success": False, "error": "Mensaje vacio"})
+
+    clean = clean_noise(message)
+    labeled = extract_labeled(clean)
+
+    address = labeled.get('address')
+    if not address:
+        address, _ind = extract_address_indications(clean)
+    if not address and len(message.strip()) >= 5:
+        address = message.strip()
+
+    if not address:
+        return jsonify({"success": False, "error": "No pude reconocer la dirección"})
+
+    locality = None
+    if labeled.get('locality'):
+        locality, _err = extract_locality(labeled['locality'])
+    if not locality:
+        locality, _err = extract_locality(clean)
+
+    return jsonify({
+        "success": True,
+        "address": address,
+        "location": locality,
+    })
+
+
 @app.route('/analyze-failures', methods=['POST'])
 def analyze_failures():
     """Analiza mensajes que fallaron la clasificación."""
