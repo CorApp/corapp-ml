@@ -962,6 +962,49 @@ def _match_category_exact_or_phrase(query_norm: str, products: list) -> list:
     return matches
 
 
+def _match_shared_first_word(query_norm: str, products: list) -> list:
+    """
+    Si el query es (o se reduce, quitando relleno, a) UNA sola palabra que
+    coincide con la PRIMERA palabra del nombre de varios productos
+    distintos, se devuelven TODOS — en vez de adivinar cuál quiso decir
+    el cliente.
+
+    Ej real detectado en producción: "Cebolla" solo debe mostrar las 3
+    variantes (Cebolla cabezona blanca, Cebolla cabezona morada, Cebolla
+    larga) en vez de escoger una al azar por score. "Repollo" debe
+    mostrar tanto Repollo morado como Repollo verde.
+
+    Si el cliente ya fue más específico ("Repollo verde", "Cebolla
+    larga") el query tiene 2+ palabras de fondo y esto NO se activa —
+    ese caso ya lo resuelve bien el scoring normal de nombre completo.
+
+    Si solo HAY un producto con esa primera palabra, tampoco se activa
+    aquí (no hay ambigüedad que resolver) y sigue el flujo normal.
+    """
+    core_words = [w for w in query_norm.split() if w not in CATEGORY_FILLER_WORDS]
+    if len(core_words) != 1:
+        return []
+
+    query_word = core_words[0]
+    query_variants = _word_form_variants(query_word)
+
+    first_word_groups: dict[str, list] = {}
+    for product in products:
+        name_norm = normalize(str(product.get("name", "")))
+        if not name_norm:
+            continue
+        first_word = name_norm.split()[0]
+        first_word_groups.setdefault(first_word, []).append(product)
+
+    for first_word, group in first_word_groups.items():
+        if len(group) < 2:
+            continue
+        if query_variants & _word_form_variants(first_word):
+            return group
+
+    return []
+
+
 def find_products_by_query(query: str, products: list) -> tuple[list, str]:
     """
     Busca productos por query del cliente.
@@ -1008,6 +1051,13 @@ def find_products_by_query(query: str, products: list) -> tuple[list, str]:
     category_match_products = _match_category_exact_or_phrase(query_norm, products)
     if category_match_products:
         return category_match_products[:8], 'category_exact'
+
+    # ── PASO 0.5: Nombre compartido — varios productos con la misma
+    # primera palabra ("Cebolla", "Repollo") y el cliente no especificó
+    # más. Se muestran todos en vez de adivinar uno solo. ──────────────────
+    shared_name_products = _match_shared_first_word(query_norm, products)
+    if shared_name_products:
+        return shared_name_products[:8], 'shared_name'
 
     # ── PASO 1: Buscar siempre por nombre de producto específico ──────────
     # Esto corre SIEMPRE que no hubo match de categoría en el PASO 0
