@@ -1366,8 +1366,8 @@ def build_tenant_response(intent: str, confidence: float, message: str, tenant: 
 
     elif intent == "queja_servicio":
         return random.choice([
-            f"Lamento que hayas tenido esa experiencia 😔 ¿Te gustaría que un asesor de {business_name} te contacte personalmente para ayudarte?",
-            f"Entiendo, lamentamos lo sucedido. ¿Quieres que un asesor de {business_name} se comunique contigo?",
+            f"No pude entender lo que me enviaste 😊 ¿Te gustaría que un asesor de {business_name} te contacte personalmente?",
+            f"No entendí bien tu mensaje 😊 ¿Quieres que un asesor de {business_name} se comunique contigo?",
         ])
 
     elif intent == "consulta_estado_pedido":
